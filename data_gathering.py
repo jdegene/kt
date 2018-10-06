@@ -584,6 +584,9 @@ def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResult
         else:
             upper_boundary = data_game_day_BL2
         
+        # ensure maximum gameday is 34
+        upper_boundary = min(upper_boundary, 34)
+        
         for g in range(1, upper_boundary+1):
             getTableFromKicker(cur_season, l, g, allTables)
 
