@@ -498,18 +498,96 @@ def teamResultsBuilder(teamListcsv="AllTeamPages.csv", mode = 'u', outCsv="AllTe
 
 
 
+def getCurrentGameDay(league, in_df):
+    """
+    Returns the current GameDay (int) as determined from  :in_df:
+        for :league: 1 or 2
+        
+        :in_df: should only contain data from current season
+    """ 
+    
+    # reduce entries to only contain BL or 2.BL entries
+    if league == 1:
+        in_df = in_df[in_df["Wettbewerb"].isin(["BL"])]
+    elif league == 2:
+        in_df = in_df[in_df["Wettbewerb"].isin(["2.BL"])]
+    
+    # choose first team from current season
+    in_df = in_df[in_df["Team"] == in_df["Team"].unique()[0] ]
+    # remove all scores that are -:-
+    in_df = in_df[in_df["Score"] != "-:-" ]
+
+    # sort by gameday, recent / highest number is on top
+    in_df = in_df.sort_values("Spt./Runde", ascending=False)
+    # get gameday by index locations
+    last_gameday = in_df.iloc[0,6]
+    
+    # clean last_gameday, as it is still a string in form 9. Spt. or 10. Spt.
+    return int(last_gameday[ : last_gameday.find(".")])
 
 
 
+def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResults.csv", 
+              allTables = "AllTables.csv"):
+    """
+    will update the above specified files for current season & gameday
+    
+    Should not be run on actual gamedays but only AFTER, unwanted behaviour expected otherwise
+    """
+    
+    cur_season = getCurrentSeason() 
+    
+    # will check if AllTeamPages was run for current season. If run, will be skipped
+    aTP_df = pd.read_csv(allTeamPages, sep=";")
+    if cur_season not in aTP_df["Season"].unique():
+        getAllTeamPages(allTeamPages)
+        print("Teampages updated")
+    else:
+        print("Teampages not updated, still up-to-date")
+        
+    
+    # # # # # # 
+    
+        
+    # update AllTeamResults next, to use this to extract current gameday
+    teamResultsBuilder(allTeamPages, mode = 'u', outCsv=allTeamResults)
+    print("Teamresults updated")
+    
+    
+    # # # # # # 
+    
+    
+    # use first team in list for current season and extract last played gameday
+    aTR_df = pd.read_csv(allTeamResults, sep=";")
+    # reduce to current season
+    aTR_df_cur = aTR_df[ aTR_df["Season"] == cur_season ]
+    
+    # for current approach redundant
+    #last_gameday_BL1 = getCurrentGameDay(1, aTR_df_cur)
+    #last_gameday_BL2 = getCurrentGameDay(2, aTR_df_cur)
+    
+    
+    # update AllTables, by checking how many gamedays are missing 
+    aT_df = pd.read_csv(allTables, sep=";")
+    data_game_day_BL1 = aT_df[ (aT_df["Season"]==cur_season) & (aT_df["League"]==1)]["GameDay"].max()
+    data_game_day_BL2 = aT_df[ (aT_df["Season"]==cur_season) & (aT_df["League"]==2)]["GameDay"].max()
+    
+    # cut off current season, save file back to csv, then re-run current season
+    aT_df  = aT_df [aT_df ["Season"] != cur_season]
+    aT_df.to_csv(allTables, sep=";")
+    
+    for l in [1,2]:
+        
+        # determine maximum gameday to crawl in current season
+        if l == 1:
+            upper_boundary = data_game_day_BL1
+        else:
+            upper_boundary = data_game_day_BL2
+        
+        for g in range(1, upper_boundary+1):
+            getTableFromKicker(cur_season, l, g, allTables)
 
-
-
-
-
-
-
-
-
+    print("Teamresults updated")
 
 
 
