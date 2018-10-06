@@ -532,6 +532,8 @@ def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResult
     """
     will update the above specified files for current season & gameday
     
+    will update allTeamResults and allTables even if they are up to date! (Refetch everything for cur season)
+    
     Should not be run on actual gamedays but only AFTER, unwanted behaviour expected otherwise
     """
     
@@ -590,13 +592,14 @@ def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResult
         for g in range(1, upper_boundary+1):
             getTableFromKicker(cur_season, l, g, allTables)
 
-    print("Teamresults updated")
+    print("TeamTables updated")
 
 
 
 
 
-
+updateAll(allTeamPages = "D:/Test/AllTeamPages.csv", allTeamResults = "D:/Test/AllTeamResults.csv", 
+              allTables = "D:/Test/AllTables.csv")
 
 
 
