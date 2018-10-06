@@ -138,6 +138,8 @@ def getTableFromKicker(season, league, gameday, tableCSV):
                 team = team[:-4]
         if '(M, P)' in team:
                 team = team[:-7]
+        if ' *' in team:
+                team = team[:-2]
 
 
         outDF = outDF.append({'Retrieve_Date' :  pendulum.now().to_date_string(),
