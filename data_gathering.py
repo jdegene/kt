@@ -534,8 +534,11 @@ def getCoaches(teamListcsv="AllTeamPages.csv", outCsv = "AllTeamCoaches.csv"):
             # find main container with all coaches in it
             main_container = soup.find("div", {"id" : "slidercontainer"})
             
-            # get one container per coach
-            coaches = main_container.find_all("div", {"class" : "trainerverlauf_Container"})
+            try:
+                # get one container per coach
+                coaches = main_container.find_all("div", {"class" : "trainerverlauf_Container"})
+            except:
+                return
             
             # get first part with coach general data
             for c in coaches:
@@ -569,9 +572,12 @@ def getCoaches(teamListcsv="AllTeamPages.csv", outCsv = "AllTeamCoaches.csv"):
                                       "bis" : bis}, 
                                     ignore_index=True)
                 
+                outDF.drop_duplicates(subset=['Team', 'Vorname', 'Nachname', 'von'] ,inplace=True)
+                
             print(len(coaches), " Coaches of ", url_split[-2] ,"done")
     
-    outDF.to_csv(outCsv, sep=";")
+    
+            outDF.to_csv(outCsv, sep=";")
 
 
 
@@ -605,7 +611,7 @@ def getCurrentGameDay(league, in_df):
 
 
 def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResults.csv", 
-              allTables = "AllTables.csv"):
+              allTables = "AllTables.csv", allCoaches = "AllTeamCoaches.csv"):
     """
     will update the above specified files for current season & gameday
     
@@ -671,6 +677,10 @@ def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResult
 
     print("TeamTables updated")
 
+
+    # # # # #
+    getCoaches(teamListcsv=allTeamPages, outCsv = allCoaches)
+    
 
 
 
