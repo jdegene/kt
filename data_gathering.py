@@ -19,6 +19,7 @@ If starting from scratch:
 
 If updating exsiting files:
     1. Just run updateAll() - this will update all passed files for the current season
+                                Will actually fetch data for current season again
 
 """
 
@@ -498,6 +499,82 @@ def teamResultsBuilder(teamListcsv="AllTeamPages.csv", mode = 'u', outCsv="AllTe
 
 
 
+def getCoaches(teamListcsv="AllTeamPages.csv", outCsv = "AllTeamCoaches.csv"):
+    """
+    Get all the coaches of a team
+    Uses most recent urls from teamListcsv to go through coaches list    
+    """
+    
+    collist = ['Retrieve_Date', 'Team', "Vorname", "Nachname", "Geboren", "Nationalität",
+               "von", "bis"]
+    try:
+        outDF = pd.read_csv(inCsvFile, sep=";", encoding="utf8")
+    except:
+        outDF = pd.DataFrame(columns=collist)
+    
+    options = webdriver.firefox.options.Options()
+    options.add_argument('-headless')
+    driver = webdriver.Firefox(firefox_options=options)
+    
+    teamList = pd.read_csv(teamListcsv, sep=";")
+    teamList.sort_values("Season", ascending=False, inplace=True)
+    single_list = teamList.drop_duplicates("Team")
+    
+    for url in single_list["Team_URL"]:
+            # urls must end in vereinstermine.html, currently ending in vereinsinformationen.html
+            url_split = url.split("/")
+            url_split[-1] =  "trainer.html"
+            url = "/".join(url_split)
+            
+            driver.get(url)
+            
+            blankHTML = driver.page_source
+            soup = BeautifulSoup(blankHTML, "lxml") 
+            
+            # find main container with all coaches in it
+            main_container = soup.find("div", {"id" : "slidercontainer"})
+            
+            # get one container per coach
+            coaches = main_container.find_all("div", {"class" : "trainerverlauf_Container"})
+            
+            # get first part with coach general data
+            for c in coaches:
+                coach_cv = c.find_all("tbody")[0]
+                coach_cv_subs = coach_cv.find_all("tr")
+                
+                for entry in coach_cv_subs:
+                    if 'Vorname' in entry.text:
+                        vorname = entry.text[entry.text.find(":") + 1: ]
+                    if 'Nachname' in entry.text:
+                        nachname = entry.text[entry.text.find(":") + 1: ]
+                    if 'Geboren' in entry.text:
+                        geboren = entry.text[entry.text.find(":") + 1: ].strip()
+                    if 'Nation' in entry.text:
+                        nation = entry.text[entry.text.find(":") + 1: ]
+                    if 'von:' in entry.text:
+                        von = entry.text[entry.text.find(":") + 1 : entry.text.rfind(",")]
+                    if 'bis:' in entry.text:
+                        if c == coaches[-1]:
+                            bis = ""
+                        else:
+                            bis = entry.text[entry.text.find(":") + 1 : entry.text.rfind(",")]
+                    
+                outDF = outDF.append({'Retrieve_Date' :  pendulum.now().to_date_string(),
+                                      'Team' : url_split[-2], 
+                                      "Vorname" : vorname, 
+                                      "Nachname" : nachname, 
+                                      "Geboren" : geboren, 
+                                      "Nationalität" : nation,
+                                      "von" : von, 
+                                      "bis" : bis}, 
+                                    ignore_index=True)
+                
+            print(len(coaches), " Coaches of ", url_split[-2] ,"done")
+    
+    outDF.to_csv(outCsv, sep=";")
+
+
+
 def getCurrentGameDay(league, in_df):
     """
     Returns the current GameDay (int) as determined from  :in_df:
@@ -598,8 +675,8 @@ def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResult
 
 
 
-updateAll(allTeamPages = "D:/Test/AllTeamPages.csv", allTeamResults = "D:/Test/AllTeamResults.csv", 
-              allTables = "D:/Test/AllTables.csv")
+#updateAll(allTeamPages = "D:/Test/AllTeamPages.csv", allTeamResults = "D:/Test/AllTeamResults.csv", 
+#              allTables = "D:/Test/AllTables.csv")
 
 
 
