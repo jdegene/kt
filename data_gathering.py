@@ -1,5 +1,26 @@
 # -*- coding: utf-8 -*-
-# ML application to predict kicktipp results
+
+"""
+This file handles the data download and updating process, for BL 1 & 2 data back until 2004
+
+If starting from scratch:
+    1. Run getTableFromKicker() - this will download the tables for each gameday 
+                                    (run in 3 loops for season, league and gameday)
+                                    Does not need anything else run beforehand
+    
+    2. Run getAllTeamPages() - returns a list of all teams in a season and league incl. reference URL
+                                Will automatically loop back to 2004, no outer loops needed
+    
+    3. Run teamResultsBuilder() -  this will use data from step and pass the URLs of each team
+                                   to getTeamData(), which downloads all results of the team per season
+                                   for all teams found in original table
+                                   
+                                   Run in mode "a" for all
+
+If updating exsiting files:
+    1. Just run updateAll() - this will update all passed files for the current season
+
+"""
 
 import requests
 import pandas as pd
@@ -366,18 +387,79 @@ def getTeamData(inCsvFile, mode = 'u', rec_url = None):
             outDF = outDF.append(pdTable, ignore_index=True)
             
             # drop duplicates, determined by date, when in doubt keep later crawled
-            outDF.drop_duplicates(subset=['Termin'], keep='last', inplace=True)
+            outDF.drop_duplicates(subset=['Termin', 'Team'], keep='last', inplace=True)
             
             outDF = outDF[collist]
             
             outDF.to_csv(inCsvFile, sep=";") 
             print("Season ", i, " Team ", split_url[-2], " done")
     
+    
+    elif mode == 'u':
+        print("started")
+        split_url = rec_url.split('/')
+        url = rec_url
+        team = split_url[-2]
+        
+        
+        # remove all data from current season and team
+        outDF = outDF[ ~(outDF["Season"] == cur_season) & (outDF["Team"] == team) ] 
+                
+        # try reloading after timeout
+        try:
+            driver.get(url) 
+        except:
+            driver.get(url)
+        blankHTML = driver.page_source
+        soup = BeautifulSoup(blankHTML, "lxml") 
+        
+        # ocate table in html code, read html table with pandas
+        table = soup.find("table", {"class" : "tStat", "summary" : "Tabelle"})
+        pdTable = pd.read_html(str(table), header=0)[0]
+        
+        # clean up table
+        pdTable = pdTable.iloc[ : , 0:6]
+        try:
+            pdTable.dropna(subset=["Gegner"], inplace=True)
+        except:
+            return
+        
+        # ffill missing Wettbewerb data
+        pdTable = pdTable.fillna(method='ffill')
+        
+        # get a clean column with final result
+        pdTable["Score"] = pdTable.apply(lambda row: getScore(row['i']), axis=1)
+        
+        # get a column indicating if game was n.V. or i.E.
+        pdTable["Overtime"] = pdTable.apply(lambda row: getOvertime(row['i']), axis=1)
+        
+        # delete obsolete orignal results column, labeled i 
+        pdTable.drop(["i"], axis=1, inplace=True)
+        
+        # retrieval date column added
+        pdTable['Retrieve_Date'] = pendulum.now().to_date_string()
+        pdTable['Team'] = split_url[-2]
+        pdTable['Season'] = i
+        
+        pdTable.rename(columns={"Ergebnis":"Wo"})
+        
+        # append table
+        outDF = outDF.append(pdTable, ignore_index=True)
+        
+        # drop duplicates, determined by date, when in doubt keep later crawled
+        outDF.drop_duplicates(subset=['Termin', 'Team'], keep='last', inplace=True)
+        
+        outDF = outDF[collist]
+        
+        outDF.to_csv(inCsvFile, sep=";") 
+        print("Season ", i, " Team ", split_url[-2], " updated")
+
+    
     driver.close()
 
 
 
-def teamResultsBuilder(teamListcsv, outCsv="AllTeamResults.csv"):
+def teamResultsBuilder(teamListcsv, mode = 'u', outCsv="AllTeamResults.csv"):
     """
     Build a teamresults.csv using getTeamData() for all teams from getAllTeamPages() output
     
@@ -386,20 +468,62 @@ def teamResultsBuilder(teamListcsv, outCsv="AllTeamResults.csv"):
     
     teamList = pd.read_csv(teamListcsv, sep=";")
     
-    # sort so latest season is on top, drop duplicate entries keep first
-    teamList.sort_values("Season", ascending=False, inplace=True)
-    single_list = teamList.drop_duplicates("Team")
+    cur_season = getCurrentSeason() 
     
-    for url in single_list["Team_URL"]:
-        # urls must end in vereinstermine.html, currently ending in vereinsinformationen.html
-        url_split = url.split("/")
-        url_split[-1] =  "vereinstermine.html"
-        url = "/".join(url_split)
+    if mode == 'a':
+        # sort so latest season is on top, drop duplicate entries keep first
+        teamList.sort_values("Season", ascending=False, inplace=True)
+        single_list = teamList.drop_duplicates("Team")
         
-        
-        getTeamData(outCsv, mode = 'a', rec_url = url)
-        
+        for url in single_list["Team_URL"]:
+            # urls must end in vereinstermine.html, currently ending in vereinsinformationen.html
+            url_split = url.split("/")
+            url_split[-1] =  "vereinstermine.html"
+            url = "/".join(url_split)
+            
+            
+            getTeamData(outCsv, mode = 'a', rec_url = url)
     
+    elif mode == 'u':
+        # will effectivly delete present entry for club and season, fetch it again and append new data
+        teamList_current = teamList[teamList['Season'] == cur_season]
+    
+        for url in teamList_current["Team_URL"]:
+            # urls must end in vereinstermine.html, currently ending in vereinsinformationen.html
+            url_split = url.split("/")
+            url_split[-1] =  "vereinstermine.html"
+            url = "/".join(url_split)
+            
+            
+            getTeamData(outCsv, mode = 'u', rec_url = url)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
