@@ -315,7 +315,7 @@ def getTeamData(inCsvFile, mode = 'u', rec_url = None):
     cur_season = getCurrentSeason()  
     
     # prepare/load outout DF
-    collist = ['Retrieve_Date', 'Team', 'Season', 'Gegner', 'Wettbewerb', 'Spt./Runde', 'Termin', 'Wo', 'Score',
+    collist = ['Retrieve_Date', 'Team', 'Season', 'Gegner', 'Wettbewerb', 'Spt./Runde', 'Termin', 'Score',
        'Overtime']
     try:
         outDF = pd.read_csv(inCsvFile, sep=";", encoding="utf8")
@@ -396,14 +396,13 @@ def getTeamData(inCsvFile, mode = 'u', rec_url = None):
     
     
     elif mode == 'u':
-        print("started")
         split_url = rec_url.split('/')
         url = rec_url
         team = split_url[-2]
         
         
         # remove all data from current season and team
-        outDF = outDF[ ~(outDF["Season"] == cur_season) & (outDF["Team"] == team) ] 
+        outDF = outDF[ ~((outDF["Season"] == cur_season) & (outDF["Team"] == team)) ] 
                 
         # try reloading after timeout
         try:
@@ -439,7 +438,7 @@ def getTeamData(inCsvFile, mode = 'u', rec_url = None):
         # retrieval date column added
         pdTable['Retrieve_Date'] = pendulum.now().to_date_string()
         pdTable['Team'] = split_url[-2]
-        pdTable['Season'] = i
+        pdTable['Season'] = cur_season
         
         pdTable.rename(columns={"Ergebnis":"Wo"})
         
@@ -452,14 +451,14 @@ def getTeamData(inCsvFile, mode = 'u', rec_url = None):
         outDF = outDF[collist]
         
         outDF.to_csv(inCsvFile, sep=";") 
-        print("Season ", i, " Team ", split_url[-2], " updated")
+        print("Season ", cur_season, " Team ", split_url[-2], " updated")
 
     
     driver.close()
 
 
 
-def teamResultsBuilder(teamListcsv, mode = 'u', outCsv="AllTeamResults.csv"):
+def teamResultsBuilder(teamListcsv="AllTeamPages.csv", mode = 'u', outCsv="AllTeamResults.csv"):
     """
     Build a teamresults.csv using getTeamData() for all teams from getAllTeamPages() output
     
