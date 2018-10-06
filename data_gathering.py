@@ -526,7 +526,10 @@ def getCoaches(teamListcsv="AllTeamPages.csv", outCsv = "AllTeamCoaches.csv"):
             url_split[-1] =  "trainer.html"
             url = "/".join(url_split)
             
-            driver.get(url)
+            try:
+                driver.get(url)
+            except:
+                driver.get(url)
             
             blankHTML = driver.page_source
             soup = BeautifulSoup(blankHTML, "lxml") 
