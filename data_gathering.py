@@ -512,7 +512,6 @@ def getCurrentList(in_urls):
         
         # if url already correct, simply append
         if url_split[-3] == "20" + fix_season(cur_season) + "-" + fix_season(cur_season+1):
-            print(url)
             out_list.append(url)
         
         else:
@@ -602,10 +601,7 @@ def getCoaches(teamListcsv="AllTeamPages.csv", mode = "u", outCsv = "AllTeamCoac
                     if 'von:' in entry.text:
                         von = entry.text[entry.text.find(":") + 1 : entry.text.rfind(",")]
                     if 'bis:' in entry.text:
-                        if c == coaches[-1]:
-                            bis = ""
-                        else:
-                            bis = entry.text[entry.text.find(":") + 1 : entry.text.rfind(",")]
+                        bis = entry.text[entry.text.find(":") + 1 : entry.text.rfind(",")]
                     
                 outDF = outDF.append({'Retrieve_Date' :  pendulum.now().to_date_string(),
                                       'Team' : url_split[-2], 
