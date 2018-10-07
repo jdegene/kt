@@ -542,7 +542,7 @@ def getCoaches(teamListcsv="AllTeamPages.csv", mode = "u", outCsv = "AllTeamCoac
     collist = ['Retrieve_Date', 'Team', "Vorname", "Nachname", "Geboren", "Nationalität",
                "von", "bis"]
     try:
-        outDF = pd.read_csv(inCsvFile, sep=";", encoding="utf8")
+        outDF = pd.read_csv(outCsv, sep=";", encoding="utf8")
     except:
         outDF = pd.DataFrame(columns=collist)
     
