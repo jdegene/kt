@@ -601,7 +601,10 @@ def getCoaches(teamListcsv="AllTeamPages.csv", mode = "u", outCsv = "AllTeamCoac
                     if 'von:' in entry.text:
                         von = entry.text[entry.text.find(":") + 1 : entry.text.rfind(",")]
                     if 'bis:' in entry.text:
-                        bis = entry.text[entry.text.find(":") + 1 : entry.text.rfind(",")]
+                        if "," in entry.text:
+                            bis = entry.text[entry.text.find(":") + 1 : entry.text.rfind(",")]
+                        else:
+                            bis = entry.text[entry.text.find(":") + 1 : ]
                     
                 outDF = outDF.append({'Retrieve_Date' :  pendulum.now().to_date_string(),
                                       'Team' : url_split[-2], 
