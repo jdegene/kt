@@ -719,14 +719,14 @@ def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResult
 
 
     # # # # #
-    getCoaches(teamListcsv=allTeamPages, outCsv = allCoaches)
+    getCoaches(teamListcsv=allTeamPages, mode='u', outCsv = allCoaches)
     
 
 
 
 
-#updateAll(allTeamPages = "D:/Test/AllTeamPages.csv", allTeamResults = "D:/Test/AllTeamResults.csv", 
-#              allTables = "D:/Test/AllTables.csv")
+#updateAll(allTeamPages = "E:/Test/AllTeamPages.csv", allTeamResults = "E:/Test/AllTeamResults.csv", 
+#              allTables = "E:/Test/AllTables.csv", allCoaches = "E:/Test/AllTeamCoaches.csv")
 
 
 
