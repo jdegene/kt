@@ -499,10 +499,39 @@ def teamResultsBuilder(teamListcsv="AllTeamPages.csv", mode = 'u', outCsv="AllTe
 
 
 
-def getCoaches(teamListcsv="AllTeamPages.csv", outCsv = "AllTeamCoaches.csv"):
+def getCurrentList(in_urls):
+    """
+    If url is not from current season, creates iteratively possible urls for lower leagues 
+    """
+    cur_season = getCurrentSeason() 
+    
+    out_list = []
+    
+    for url in in_urls:
+        url_split = url.split("/")
+        
+        # replace date part of string with current season
+        cur_season_str = "20" + fix_season(cur_season) + "_" + fix_season(cur_season+1)
+        url_split[-3] = cur_season_str
+        
+        for l in ["3-liga"]:
+            url_split[-4] = l
+            out_url = "/".join(url_split)
+            out_list.append(out_url)
+    
+    return out_list
+        
+
+
+def getCoaches(teamListcsv="AllTeamPages.csv", mode = "u", outCsv = "AllTeamCoaches.csv"):
     """
     Get all the coaches of a team
     Uses most recent urls from teamListcsv to go through coaches list    
+    
+    :mode: if "u" only currently BL1 and BL2 coaches are updated (site fetching with most recent url
+                                                                only works for current season links)
+              "a" all coaches are fetched, this season most recent url for each team must be determined
+                                                                first
     """
     
     collist = ['Retrieve_Date', 'Team', "Vorname", "Nachname", "Geboren", "Nationalität",
@@ -520,7 +549,13 @@ def getCoaches(teamListcsv="AllTeamPages.csv", outCsv = "AllTeamCoaches.csv"):
     teamList.sort_values("Season", ascending=False, inplace=True)
     single_list = teamList.drop_duplicates("Team")
     
-    for url in single_list["Team_URL"]:
+    if mode == "u":    
+        url_list = single_list["Team_URL"]
+    
+    if mode == "a":
+        url_list  == getCurrentList(single_list)
+    
+    for url in url_list:
             # urls must end in vereinstermine.html, currently ending in vereinsinformationen.html
             url_split = url.split("/")
             url_split[-1] =  "trainer.html"
@@ -541,6 +576,7 @@ def getCoaches(teamListcsv="AllTeamPages.csv", outCsv = "AllTeamCoaches.csv"):
                 # get one container per coach
                 coaches = main_container.find_all("div", {"class" : "trainerverlauf_Container"})
             except:
+                print("Skipped emtpy ", url)
                 return
             
             # get first part with coach general data
@@ -577,8 +613,7 @@ def getCoaches(teamListcsv="AllTeamPages.csv", outCsv = "AllTeamCoaches.csv"):
                 
                 outDF.drop_duplicates(subset=['Team', 'Vorname', 'Nachname', 'von'] ,inplace=True)
                 
-            print(len(coaches), " Coaches of ", url_split[-2] ,"done")
-    
+            print(len(coaches), " Coaches of ", url_split[-2] ,"done")    
     
             outDF.to_csv(outCsv, sep=";")
 
