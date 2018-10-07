@@ -510,14 +510,20 @@ def getCurrentList(in_urls):
     for url in in_urls:
         url_split = url.split("/")
         
-        # replace date part of string with current season
-        cur_season_str = "20" + fix_season(cur_season) + "_" + fix_season(cur_season+1)
-        url_split[-3] = cur_season_str
+        # if url already correct, simply append
+        if url_split[-3] == "20" + fix_season(cur_season) + "-" + fix_season(cur_season+1):
+            print(url)
+            out_list.append(url)
         
-        for l in ["3-liga"]:
-            url_split[-4] = l
-            out_url = "/".join(url_split)
-            out_list.append(out_url)
+        else:
+            # replace date part of string with current season
+            cur_season_str = "20" + fix_season(cur_season) + "-" + fix_season(cur_season+1)
+            url_split[-3] = cur_season_str
+            
+            for l in ["bundesliga", "2bundesliga", "3-liga"]:
+                url_split[-4] = l
+                out_url = "/".join(url_split)
+                out_list.append(out_url)
     
     return out_list
         
@@ -553,7 +559,7 @@ def getCoaches(teamListcsv="AllTeamPages.csv", mode = "u", outCsv = "AllTeamCoac
         url_list = single_list["Team_URL"]
     
     if mode == "a":
-        url_list  == getCurrentList(single_list)
+        url_list  = getCurrentList(single_list["Team_URL"])
     
     for url in url_list:
             # urls must end in vereinstermine.html, currently ending in vereinsinformationen.html
@@ -577,7 +583,7 @@ def getCoaches(teamListcsv="AllTeamPages.csv", mode = "u", outCsv = "AllTeamCoac
                 coaches = main_container.find_all("div", {"class" : "trainerverlauf_Container"})
             except:
                 print("Skipped emtpy ", url)
-                return
+                continue
             
             # get first part with coach general data
             for c in coaches:
