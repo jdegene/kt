@@ -17,6 +17,10 @@ def createMainFrame():
     outDF = pd.DataFrame(colums=["Team1", 
                                  "Team2", 
                                  
+                                 "GameTimeOfDay", # Time of Game
+                                 "GameWeekday", # Weekday of Game
+                                 "GameDay", # GameDay in League
+                                 
                                  "CurrentPoints1", # current position in league Team 1
                                  "CurrentPoints2", # current position in league Team 2
                                  
@@ -36,7 +40,7 @@ def createMainFrame():
                                  "LastSeasonLeague2", # last season league of Team 2
                                  
                                  "Past5YearsInThisLeague1", # No of season played in this league last 5 years by Team 1
-                                 "Past5YearsInThisLeague1", # No of season played in this league last 5 years by Team 2
+                                 "Past5YearsInThisLeague2", # No of season played in this league last 5 years by Team 2
                                  
                                  "LastDirectGame1", # Last direct meeting of both teams results (0:0 if none)
                                  "LastDirectGame2", # 2nd last direct meeting of both teams results (0:0 if none)
@@ -67,8 +71,4 @@ def createMainFrame():
                                  
                                  "TimeSinceLastCoach1", # Time since Team 1 has current coach (if any)
                                  "TimeSinceLastCoach2", # Time since Team 2 has current coach (if any)
-                                 
-                                 "GameTimeOfDay", # Time of Game
-                                 "GameWeekday", # Weekday of Game
-                                 "GameDay", # GameDay in League
                                  ])
