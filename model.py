@@ -3,8 +3,39 @@
 # handles data transformation, model building and model application
 
 import pandas as pd
+import json
 
 import pendulum
+
+
+
+# # # # # # # # # LOAD RAW DATA # # # # # # # # #
+
+allTeamPages = pd.read_csv("E:/Test/AllTeamPages.csv", sep=";")
+allTeamResults = pd.read_csv("E:/Test/AllTeamResults.csv", sep=";")
+allTables = pd.read_csv("E:/Test/AllTables.csv", sep=";")
+allCoaches = pd.read_csv("E:/Test/AllTeamCoaches.csv", sep=";")
+
+with open("C:/WorkExchange/Python/Git/kt/alias.json", "r", encoding="utf8") as j:
+    alias_json = json.load( j )
+
+# # # # # # # # # BUILD INPUT DF # # # # # # # # #
+
+def translateTeam(inTeam):
+    """
+    Return key of alias_json for passed team, returns error if team is neither key nor value
+    """
+    
+    if inTeam in alias_json.keys():
+        return inTeam
+    
+    # list should contain exactly one entry if inTeam exists as a dictionary value
+   
+    elif len( [ key_values for key_values in alias_json.items() if inTeam in key_values[1] ] ) == 1:       
+        return [ key_values for key_values in alias_json.items() if inTeam in key_values[1] ][0][0]
+    
+    else:
+        print("Could not find ", inTeam, " in Alias List")
 
 
 def createMainFrame():
@@ -72,3 +103,23 @@ def createMainFrame():
                                  "TimeSinceLastCoach1", # Time since Team 1 has current coach (if any)
                                  "TimeSinceLastCoach2", # Time since Team 2 has current coach (if any)
                                  ])
+    
+    
+    # build human readale dataframe (= don't transform categorical data yet)
+    
+    # list will hold tuples of games, if same game is found in another teams list, its not put into df again
+    skip_list = [] 
+    
+    # iterate over allTeamResults and extract infos for each game
+    for row_tup in allTeamResults.iterrows():
+        row = row_tup[1] # original row returns a tuple with first elem as index, second elem as data
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
