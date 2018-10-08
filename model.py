@@ -23,19 +23,15 @@ with open("C:/WorkExchange/Python/Git/kt/alias.json", "r", encoding="utf8") as j
 
 def translateTeam(inTeam):
     """
-    Return key of alias_json for passed team, returns error if team is neither key nor value
-    """
-    
-    if inTeam in alias_json.keys():
-        return inTeam
-    
-    # list should contain exactly one entry if inTeam exists as a dictionary value
+    Return key of alias_json for passed team, returns itself if nothing is found
+    """    
    
-    elif len( [ key_values for key_values in alias_json.items() if inTeam in key_values[1] ] ) == 1:       
+    # list should contain exactly one entry if inTeam exists as a dictionary value
+    if len( [ key_values for key_values in alias_json.items() if inTeam in key_values[1] ] ) == 1:       
         return [ key_values for key_values in alias_json.items() if inTeam in key_values[1] ][0][0]
     
     else:
-        print("Could not find ", inTeam, " in Alias List")
+        return inTeam
 
 
 def createMainFrame():
@@ -113,6 +109,14 @@ def createMainFrame():
     # iterate over allTeamResults and extract infos for each game
     for row_tup in allTeamResults.iterrows():
         row = row_tup[1] # original row returns a tuple with first elem as index, second elem as data
+        
+        team1 = translateTeam( row["Team"] )
+        team2 = translateTeam( row["Gegner"] )
+        
+        if (team2, team1, row["Termin"]) in skip_list:
+            continue
+        
+        skip_list.append( (team1, team2, row["Termin"]) )
     
     
     
