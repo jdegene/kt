@@ -34,6 +34,13 @@ def translateTeam(inTeam):
         return inTeam
 
 
+def getKickerTeamName(inTeam):
+    """
+    returns the team string used in kicker urls
+    """    
+    return [ x for x in alias_json[translateTeam(inTeam)] if "-" in x ][0]
+
+
 def createMainFrame():
     """
     Use basic data (data_gathering.py output) to create comprehensive DataFrame 
@@ -47,6 +54,15 @@ def createMainFrame():
                                  "GameTimeOfDay", # Time of Game
                                  "GameWeekday", # Weekday of Game
                                  "GameDay", # GameDay in League
+                                 
+                                 "GamesSinceLastWin1", # No. of games since last won game Team1
+                                 "GamesSinceLastWin2", # No. of games since last won game Team2
+
+                                 "TimeSinceLastGame1", # Time in Hours since last game Team 1
+                                 "TimeSinceLastGame2", # Time in Hours since last game Team 2
+                                 
+                                 "TimeSinceLastCoach1", # Time since Team 1 has current coach (if any)
+                                 "TimeSinceLastCoach2", # Time since Team 2 has current coach (if any)
                                  
                                  "CurrentPoints1", # current position in league Team 1
                                  "CurrentPoints2", # current position in league Team 2
@@ -92,12 +108,6 @@ def createMainFrame():
                                  
                                  "EL_candidate1", # Team 1 playing Europe League this season
                                  "EL_candidate2", # Team 2 playing Europe League this season
-                                 
-                                 "TimeSinceLastGame1", # Time in Hours since last game Team 1
-                                 "TimeSinceLastGame2", # Time in Hours since last game Team 2
-                                 
-                                 "TimeSinceLastCoach1", # Time since Team 1 has current coach (if any)
-                                 "TimeSinceLastCoach2", # Time since Team 2 has current coach (if any)
                                  ])
     
     
@@ -139,8 +149,17 @@ def createMainFrame():
                              "GameWeekday" : penudulum_time.day_of_week, # Weekday of Game
                              "GameDay" : gameDay, # GameDay in League
                              
+                             "GamesSinceLastWin1", # No. of games since last won game Team1
+                             "GamesSinceLastWin2", # No. of games since last won game Team2
+                             
                              "CurrentPoints1", # current position in league Team 1
                              "CurrentPoints2", # current position in league Team 2
+                             
+                             "TimeSinceLastGame1", # Time in Hours since last game Team 1
+                             "TimeSinceLastGame2", # Time in Hours since last game Team 2
+                             
+                             "TimeSinceLastCoach1", # Time since Team 1 has current coach (if any)
+                             "TimeSinceLastCoach2"
                              
                              "CurrentPosition1", # current position in league Team 1
                              "CurrentPosition2", # current position in league Team 2
@@ -183,12 +202,7 @@ def createMainFrame():
                              
                              "EL_candidate1", # Team 1 playing Europe League this season
                              "EL_candidate2", # Team 2 playing Europe League this season
-                             
-                             "TimeSinceLastGame1", # Time in Hours since last game Team 1
-                             "TimeSinceLastGame2", # Time in Hours since last game Team 2
-                             
-                             "TimeSinceLastCoach1", # Time since Team 1 has current coach (if any)
-                             "TimeSinceLastCoach2"}, # Time since Team 2 has current coach (if any)}, 
+                             },
                     ignore_index=True)
     
     
