@@ -2,6 +2,7 @@
 
 # handles data transformation, model building and model application
 
+import numpy as np
 import pandas as pd
 import json
 
@@ -19,7 +20,13 @@ allCoaches = pd.read_csv("E:/Test/AllTeamCoaches.csv", sep=";")
 with open("C:/WorkExchange/Python/Git/kt/alias.json", "r", encoding="utf8") as j:
     alias_json = json.load( j )
 
-# # # # # # # # # BUILD INPUT DF # # # # # # # # #
+
+# # # # # # # # # PANDAS OPTIONS # # # # # # # # #
+pd.set_option('display.max_columns', 100)
+
+
+
+# # # # # # # # # HELPER FUNCTIONS # # # # # # # # #
 
 def translateTeam(inTeam):
     """
@@ -40,6 +47,10 @@ def getKickerTeamName(inTeam):
     """    
     return [ x for x in alias_json[translateTeam(inTeam)] if "-" in x ][0]
 
+
+
+
+# # # # # # # # # BUILD INPUT DF # # # # # # # # #
 
 def createMainFrame():
     """
@@ -111,6 +122,27 @@ def createMainFrame():
                                  ])
     
     
+    
+    # # # general DF column adding etc. # # # 
+        
+    # split x:x into two columns T1Goals for Hometeam Goals and T2Goals for away team goals
+    allTeamResults = allTeamResults.join(allTeamResults["Score"].str.split(":", expand=True)
+                        ).rename(columns={0:"T1Goals", 1:"T2Goals"})
+    
+    allTeamResults = allTeamResults.replace('-', np.nan)
+    
+    # calculate field with goal difference
+    allTeamResults["Intmd"] = allTeamResults["T1Goals"].astype(float, errors='ignore').subtract(allTeamResults["T2Goals"].astype(float, errors='ignore'))
+    # divide by its self absolute value -> Hometeam win == 1, draw == 0, loss = -1
+    allTeamResults["IsWin"] = allTeamResults["Intmd"].divide( allTeamResults["Intmd"].abs())
+    # replace division by 0 values with 0, but only for existing results
+    allTeamResults["IsWin"] = allTeamResults[allTeamResults["Score"] != "-:-"]["IsWin"].fillna(0)
+    
+    
+    # convert Termin column to new DateTime type column Date
+    allTeamResults["Date"] = pd.to_datetime(allTeamResults["Termin"].str.slice(4), errors='coerce', format='%d.%m.%y %H:%M')
+    
+    
     # build human readale dataframe (= don't transform categorical data yet)
     
     # list will hold tuples of games, if same game is found in another teams list, its not put into df again
@@ -132,12 +164,34 @@ def createMainFrame():
             continue        
         skip_list.append( (team1, team2, row["Termin"]) )
         
-        # time-wise caluclations
-        penudulum_time = pendulum.from_format(roww["Termin"][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')        
+        
+
+    
+       
+        # # # time-related caluclations # # # 
+        penudulum_time = pendulum.from_format(roww["Termin"][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')     
+        
         # game time in minutes since midnight, e.g. 13:00h == 780
         gameTimeMinutes = penudulum_time.hour * 60 + penudulum_time.minute
         
+        
         gameDay = int(row["Spt./Runde"][ : row["Spt./Runde"].find(".")])
+        
+        
+        # get no of games since last win
+        
+        # get df with only current team and only games WITH result 
+        lf_df1 = allTeamResults[ (allTeamResults["Team"] == getKickerTeamName(team1)) & (allTeamResults["Score"] != "-:-") ]
+        lf_df2 = allTeamResults[ (allTeamResults["Team"] == getKickerTeamName(team2)) & (allTeamResults["Score"] != "-:-") ]
+        # sort lf_df by date, so last games are on bottom
+        lf_df1 = lf_df1.sort_values("Date")        
+        lf_df2 = lf_df2.sort_values("Date") 
+        # get last game with win (0 if last game was win) - reverse IsWin column as list and return index of first element that is 1
+        last_game_won1 = lf_df["IsWin"].tolist()[::-1].index(1)
+        last_game_won2 = lf_df2["IsWin"].tolist()[::-1].index(1)
+        
+        
+
         
     
     
@@ -149,8 +203,8 @@ def createMainFrame():
                              "GameWeekday" : penudulum_time.day_of_week, # Weekday of Game
                              "GameDay" : gameDay, # GameDay in League
                              
-                             "GamesSinceLastWin1", # No. of games since last won game Team1
-                             "GamesSinceLastWin2", # No. of games since last won game Team2
+                             "GamesSinceLastWin1" : last_game_won1, # No. of games since last won game Team1
+                             "GamesSinceLastWin2" : last_game_won2, # No. of games since last won game Team2
                              
                              "CurrentPoints1", # current position in league Team 1
                              "CurrentPoints2", # current position in league Team 2
