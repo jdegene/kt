@@ -48,6 +48,18 @@ def getKickerTeamName(inTeam):
     return [ x for x in alias_json[translateTeam(inTeam)] if "-" in x ][0]
 
 
+def seasonFromDate(inDate):
+    """
+    Returns season (int) that passed date lies in. August splits season (August 2018 is part of season 18/19)
+    
+    :inDate: pendulum datetime object
+    """    
+    if penudulum_time.month < 8:
+        cur_season = penudulum_time.year - 1999
+    else:
+        cur_season = penudulum_time.year - 2000
+    return cur_season
+
 
 
 # # # # # # # # # BUILD INPUT DF # # # # # # # # #
@@ -169,13 +181,13 @@ def createMainFrame():
     
        
         # # # time-related caluclations # # # 
-        penudulum_time = pendulum.from_format(roww["Termin"][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')     
+        penudulum_time = pendulum.from_format(row["Termin"][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')     
         
         # game time in minutes since midnight, e.g. 13:00h == 780
         gameTimeMinutes = penudulum_time.hour * 60 + penudulum_time.minute
         
         
-        gameDay = int(row["Spt./Runde"][ : row["Spt./Runde"].find(".")])
+        gameDay = int(row["Spt./Runde"][ : row["Spt./Runde"].find(".")]) # Only works with BL gamedays
         
         
         # get no of games since last win
