@@ -61,6 +61,24 @@ def seasonFromDate(inDate):
     return cur_season
 
 
+def getPastLeagues(team, start_season):
+    """
+    returns the number of leagues team has played in, in last 5 seasons
+    Will return 3 for each season team was not in 1 or 2 (regardless of actual league)
+    """
+    outList = []
+    for i in range(1,6):
+        # will fail if team wasnt in league 1 or 2
+        try:            
+            l = allTables[ (allTables["Team"] == team) & (allTables["Season"] == start_season-i) & (allTables["GameDay"] == 34) 
+                          ]["League"].values[0]
+        except:
+            l = 3
+        outList.append(l)
+    return outList
+
+
+
 
 # # # # # # # # # BUILD INPUT DF # # # # # # # # #
 
@@ -80,9 +98,12 @@ def createMainFrame():
                                  
                                  "GamesSinceLastWin1", # No. of games since last won game Team1
                                  "GamesSinceLastWin2", # No. of games since last won game Team2
-
+                                 
                                  "TimeSinceLastGame1", # Time in Hours since last game Team 1
                                  "TimeSinceLastGame2", # Time in Hours since last game Team 2
+                                 
+                                 "LastGameOverTime1", # Was last game of Team 1 with overtime or penalty shootout
+                                 "LastGameOverTime2", # Was last game of Team 2 with overtime or penalty shootout
                                  
                                  "TimeSinceLastCoach1", # Time since Team 1 has current coach (if any)
                                  "TimeSinceLastCoach2", # Time since Team 2 has current coach (if any)
@@ -96,8 +117,12 @@ def createMainFrame():
                                  "CurrentGoalDif1", # current goal difference Team 1
                                  "CurrentGoalDif2", # current goal difference Team 2
                                  
-                                 "CurrentGoalDif1", # current goal difference Team 1
-                                 "CurrentGoalDif2", # current goal difference Team 2
+                                 "CurrentWin1", # current wins in season of Team 1
+                                 "CurrentDraws1", # current draws in season of Team 1
+                                 "CurrentLoss1", # current losses in season of Team 1
+                                 "CurrentWin2", # current wins in season of Team 2
+                                 "CurrentDraws2", # current draws in season of Team 2
+                                 "CurrentLoss2", # current losses in season of Team 2
                                  
                                  "LastSeasonPosition1", # last season's final position in league Team 1
                                  "LastSeasonPosition2", # last season's final position in league Team 2
@@ -105,8 +130,8 @@ def createMainFrame():
                                  "LastSeasonLeague1", # last season league of Team 1
                                  "LastSeasonLeague2", # last season league of Team 2
                                  
-                                 "Past5YearsInThisLeague1", # No of season played in this league last 5 years by Team 1
-                                 "Past5YearsInThisLeague2", # No of season played in this league last 5 years by Team 2
+                                 "Past5YearsInThisLeague1", # 1 if Team1 played in same league for past 5 years, else 0
+                                 "Past5YearsInThisLeague2", # 1 if Team2 played in same league for past 5 years, else 0
                                  
                                  "LastDirectGame1", # Last direct meeting of both teams results (0:0 if none)
                                  "LastDirectGame2", # 2nd last direct meeting of both teams results (0:0 if none)
@@ -122,9 +147,6 @@ def createMainFrame():
                                  "LastGameTeam2_3",
                                  "LastGameTeam2_4",
                                  "LastGameTeam2_5",
-                                 
-                                 "LastGameOverTime1", # Was last game of Team 1 with overtime or penalty shootout
-                                 "LastGameOverTime2", # Was last game of Team 2 with overtime or penalty shootout
                                  
                                  "CL_candidate1", # Team 1 playing Champions League this season
                                  "CL_candidate2", # Team 2 playing Champions League this season
@@ -181,13 +203,14 @@ def createMainFrame():
     
        
         # # # time-related caluclations # # # 
-        penudulum_time = pendulum.from_format(row["Termin"][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')     
+        penudulum_time = pendulum.from_format(row["Termin"][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')   
+        date_season = seasonFromDate(penudulum_time)
         
         # game time in minutes since midnight, e.g. 13:00h == 780
-        gameTimeMinutes = penudulum_time.hour * 60 + penudulum_time.minute
+        gameTimeMinutes = penudulum_time.hour * 60 + penudulum_time.minute        
         
-        
-        gameDay = int(row["Spt./Runde"][ : row["Spt./Runde"].find(".")]) # Only works with BL gamedays
+        # get gameDay, only works for BL gamedays
+        gameDay = int(row["Spt./Runde"][ : row["Spt./Runde"].find(".")]) 
         
         
         # get no of games since last win
@@ -203,9 +226,40 @@ def createMainFrame():
         last_game_won2 = lf_df2["IsWin"].tolist()[::-1].index(1)
         
         
-
+        # table entry for date
+        table_entry1 = allTables[ (allTables["Team"] == team1) & (allTables["Season"] == date_season) & (allTables["GameDay"] == gameDay) ]
+        table_entry2 = allTables[ (allTables["Team"] == team2) & (allTables["Season"] == date_season) & (allTables["GameDay"] == gameDay) ]
         
-    
+        # last seasons last gameday entry
+        ls_table_entry1 = allTables[ (allTables["Team"] == team1) & (allTables["Season"] == date_season-1) & (allTables["GameDay"] == 34) ]
+        ls_table_entry2 = allTables[ (allTables["Team"] == team2) & (allTables["Season"] == date_season-1) & (allTables["GameDay"] == 34) ]
+        
+        # last 5 seasons league, 1 if all same as current league, 0 if at least one season was different
+        t1_last5, t2_last5 = 0,0
+        if (len(set(getPastLeagues(team1, date_season))) == 1) & (getPastLeagues(team1, date_season)[0]==table_entry1["League"].values[0]):
+            t1_last5 = 1
+        if (len(set(getPastLeagues(team2, date_season))) == 1) & (getPastLeagues(team2, date_season)[0]==table_entry2["League"].values[0]):
+            t2_last5 = 1
+        
+        
+        # get if playing in CL or EL in current season
+        t1_cl, t2_cl, t1_el, t2_el = 0,0,0,0
+        if len(allTeamResults[ (allTeamResults["Team"] == getKickerTeamName(team1)) 
+                      & (allTeamResults["Season"] == date_season)
+                      & (allTeamResults["Wettbewerb"] == "CL")  ] ) > 0:
+                t1_cl = 1
+        if len(allTeamResults[ (allTeamResults["Team"] == getKickerTeamName(team2)) 
+                      & (allTeamResults["Season"] == date_season)
+                      & (allTeamResults["Wettbewerb"] == "CL")  ] ) > 0:
+                t2_cl = 1
+        if len(allTeamResults[ (allTeamResults["Team"] == getKickerTeamName(team1)) 
+                      & (allTeamResults["Season"] == date_season)
+                      & (allTeamResults["Wettbewerb"] == "EL")  ] ) > 0:
+                t1_el = 1
+        if len(allTeamResults[ (allTeamResults["Team"] == getKickerTeamName(team2)) 
+                      & (allTeamResults["Season"] == date_season)
+                      & (allTeamResults["Wettbewerb"] == "EL")  ] ) > 0:
+                t2_el = 1
     
         # append data to outDF
         outDF = outDF.append({"Team1" : team1, 
@@ -218,32 +272,40 @@ def createMainFrame():
                              "GamesSinceLastWin1" : last_game_won1, # No. of games since last won game Team1
                              "GamesSinceLastWin2" : last_game_won2, # No. of games since last won game Team2
                              
-                             "CurrentPoints1", # current position in league Team 1
-                             "CurrentPoints2", # current position in league Team 2
-                             
                              "TimeSinceLastGame1", # Time in Hours since last game Team 1
                              "TimeSinceLastGame2", # Time in Hours since last game Team 2
                              
+                             "LastGameOverTime1", # Was last game of Team 1 with overtime or penalty shootout
+                             "LastGameOverTime2", # Was last game of Team 2 with overtime or penalty shootout
+                             
                              "TimeSinceLastCoach1", # Time since Team 1 has current coach (if any)
-                             "TimeSinceLastCoach2"
+                             "TimeSinceLastCoach2", # Time since Team 2 has current coach (if any)    
                              
-                             "CurrentPosition1", # current position in league Team 1
-                             "CurrentPosition2", # current position in league Team 2
                              
-                             "CurrentGoalDif1", # current goal difference Team 1
-                             "CurrentGoalDif2", # current goal difference Team 2
+                             "CurrentPoints1" : table_entry1["points"].values[0], # current position in league Team 1
+                             "CurrentPoints2" : table_entry2["points"].values[0], # current position in league Team 2                          
                              
-                             "CurrentGoalDif1", # current goal difference Team 1
-                             "CurrentGoalDif2", # current goal difference Team 2
+                             "CurrentPosition1" : table_entry1["rank"].values[0], # current position in league Team 1
+                             "CurrentPosition2" : table_entry2["rank"].values[0], # current position in league Team 2
                              
-                             "LastSeasonPosition1", # last season's final position in league Team 1
-                             "LastSeasonPosition2", # last season's final position in league Team 2
+                             "CurrentGoalDif1" : table_entry1["diff"].values[0], # current goal difference Team 1
+                             "CurrentGoalDif2" : table_entry2["diff"].values[0], # current goal difference Team 2
                              
-                             "LastSeasonLeague1", # last season league of Team 1
-                             "LastSeasonLeague2", # last season league of Team 2
+                             "CurrentWin1" : table_entry1["g"].values[0], # current wins in season of Team 1
+                             "CurrentDraws1" : table_entry1["u"].values[0], # current draws in season of Team 1
+                             "CurrentLoss1" : table_entry1["v"].values[0], # current losses in season of Team 1
+                             "CurrentWin2" : table_entry2["g"].values[0], # current wins in season of Team 2
+                             "CurrentDraws2" : table_entry2["u"].values[0], # current draws in season of Team 2
+                             "CurrentLoss2": table_entry2["v"].values[0], # current losses in season of Team 2                             
+                                                          
+                             "LastSeasonPosition1" : ls_table_entry1["rank"].values[0], # last season's final position in league Team 1
+                             "LastSeasonPosition2" : ls_table_entry2["rank"].values[0], # last season's final position in league Team 2
                              
-                             "Past5YearsInThisLeague1", # No of season played in this league last 5 years by Team 1
-                             "Past5YearsInThisLeague2", # No of season played in this league last 5 years by Team 2
+                             "LastSeasonLeague1" : ls_table_entry1["League"].values[0], # last season league of Team 1
+                             "LastSeasonLeague2" : ls_table_entry2["League"].values[0], # last season league of Team 2
+                             
+                             "Past5YearsInThisLeague1" : t1_last5, # 1 if Team1 played in same league for past 5 years, else 0
+                             "Past5YearsInThisLeague2" : t2_last5 , # 1 if Team2 played in same league for past 5 years, else 0 
                              
                              "LastDirectGame1", # Last direct meeting of both teams results (0:0 if none)
                              "LastDirectGame2", # 2nd last direct meeting of both teams results (0:0 if none)
@@ -260,14 +322,11 @@ def createMainFrame():
                              "LastGameTeam2_4",
                              "LastGameTeam2_5",
                              
-                             "LastGameOverTime1", # Was last game of Team 1 with overtime or penalty shootout
-                             "LastGameOverTime2", # Was last game of Team 2 with overtime or penalty shootout
+                             "CL_candidate1" : t1_cl,  # Team 1 playing Champions League this season
+                             "CL_candidate2" : t2_cl,  # Team 2 playing Champions League this season
                              
-                             "CL_candidate1", # Team 1 playing Champions League this season
-                             "CL_candidate2", # Team 2 playing Champions League this season
-                             
-                             "EL_candidate1", # Team 1 playing Europe League this season
-                             "EL_candidate2", # Team 2 playing Europe League this season
+                             "EL_candidate1" : t1_el,  # Team 1 playing Europe League this season
+                             "EL_candidate2" : t2_el   # Team 2 playing Europe League this season
                              },
                     ignore_index=True)
     
