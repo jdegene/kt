@@ -54,10 +54,10 @@ def seasonFromDate(inDate):
     
     :inDate: pendulum datetime object
     """    
-    if penudulum_time.month < 8:
-        cur_season = penudulum_time.year - 1999
+    if pendulum_time.month < 8:
+        cur_season = pendulum_time.year - 1999
     else:
-        cur_season = penudulum_time.year - 2000
+        cur_season = pendulum_time.year - 2000
     return cur_season
 
 
@@ -184,6 +184,7 @@ def createMainFrame():
     
     # iterate over allTeamResults and extract infos for each game
     for row_tup in allTeamResults.iterrows():
+        row_index = row_tup[0]
         row = row_tup[1] # original row returns a tuple with first elem as index, second elem as data
         
         # skip adding if game was not in 1st or 2nd BL
@@ -203,14 +204,17 @@ def createMainFrame():
     
        
         # # # time-related caluclations # # # 
-        penudulum_time = pendulum.from_format(row["Termin"][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')   
-        date_season = seasonFromDate(penudulum_time)
+        pendulum_time = pendulum.from_format(row["Termin"][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')   
+        date_season = seasonFromDate(pendulum_time)
         
         # game time in minutes since midnight, e.g. 13:00h == 780
-        gameTimeMinutes = penudulum_time.hour * 60 + penudulum_time.minute        
+        gameTimeMinutes = pendulum_time.hour * 60 + pendulum_time.minute        
         
         # get gameDay, only works for BL gamedays
         gameDay = int(row["Spt./Runde"][ : row["Spt./Runde"].find(".")]) 
+        
+        
+        
         
         
         # get no of games since last win
@@ -225,6 +229,19 @@ def createMainFrame():
         last_game_won1 = lf_df["IsWin"].tolist()[::-1].index(1)
         last_game_won2 = lf_df2["IsWin"].tolist()[::-1].index(1)
         
+        
+        # get time since last game in hours       
+        lf_df1_reidx = lf_df1.reset_index()
+        lf_df2_reidx = lf_df2.reset_index()
+         # get index of row above current row
+        t1_idx = lf_df1_reidx[lf_df1_reidx["Termin"] == row["Termin"]] - 1
+        t2_idx = lf_df1_reidx[lf_df1_reidx["Termin"] == row["Termin"]] - 1 
+        # get game time with index above
+        last_game_time1 = pendulum.from_format(lf_df1_reidx[t1_idx]["Termin"].values[0][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')  
+        last_game_time2 = pendulum.from_format(lf_df2_reidx[t2idx]["Termin"].values[0][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')  
+        # get difference to current game in hours
+        t_diff1 = (pendulum_time - last_game_time1).in_hours()
+        t_diff2 = (pendulum_time - last_game_time2).in_hours()
         
         # table entry for date
         table_entry1 = allTables[ (allTables["Team"] == team1) & (allTables["Season"] == date_season) & (allTables["GameDay"] == gameDay) ]
@@ -261,19 +278,20 @@ def createMainFrame():
                       & (allTeamResults["Wettbewerb"] == "EL")  ] ) > 0:
                 t2_el = 1
     
+        
         # append data to outDF
         outDF = outDF.append({"Team1" : team1, 
                              "Team2" : team2, 
                              
                              "GameTimeOfDay" : gameTimeMinutes , 
-                             "GameWeekday" : penudulum_time.day_of_week, # Weekday of Game
+                             "GameWeekday" : pendulum_time.day_of_week, # Weekday of Game
                              "GameDay" : gameDay, # GameDay in League
                              
                              "GamesSinceLastWin1" : last_game_won1, # No. of games since last won game Team1
                              "GamesSinceLastWin2" : last_game_won2, # No. of games since last won game Team2
                              
-                             "TimeSinceLastGame1", # Time in Hours since last game Team 1
-                             "TimeSinceLastGame2", # Time in Hours since last game Team 2
+                             "TimeSinceLastGame1" : t_diff1, # Time in Hours since last game Team 1
+                             "TimeSinceLastGame2" : t_diff2, # Time in Hours since last game Team 2
                              
                              "LastGameOverTime1", # Was last game of Team 1 with overtime or penalty shootout
                              "LastGameOverTime2", # Was last game of Team 2 with overtime or penalty shootout
