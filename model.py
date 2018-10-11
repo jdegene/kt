@@ -17,6 +17,9 @@ allTeamResults = pd.read_csv("E:/Test/AllTeamResults.csv", sep=";")
 allTables = pd.read_csv("E:/Test/AllTables.csv", sep=";")
 allCoaches = pd.read_csv("E:/Test/AllTeamCoaches.csv", sep=";")
 
+for col in ["von", "bis"]:
+    allCoaches[col] = pd.to_datetime(allCoaches[col], errors="coerce", format="%d.%m.%Y")
+
 with open("C:/WorkExchange/Python/Git/kt/alias.json", "r", encoding="utf8") as j:
     alias_json = json.load( j )
 
@@ -243,6 +246,18 @@ def createMainFrame():
         t_diff1 = (pendulum_time - last_game_time1).in_hours()
         t_diff2 = (pendulum_time - last_game_time2).in_hours()
         
+        # was last game overtime 
+        t1_overtime = t1_idx["Overtime"].values[0]
+        t2_overtime = t2_idx["Overtime"].values[0]
+        
+        
+        # time since last coach
+        t1_coaches = allCoaches[allCoaches["Team"] == getKickerTeamName(team1)].sort_values("von")
+        t2_coaches = allCoaches[allCoaches["Team"] == getKickerTeamName(team2)].sort_values("von")
+        # time difference in days between game and last coach recruiting
+        t1_coach_diff = (pendulum_time - pendulum.instance(t1_coaches.iloc[-1]["von"], tz='Europe/Berlin')).in_days()
+        t2_coach_diff = (pendulum_time - pendulum.instance(t2_coaches.iloc[-1]["von"], tz='Europe/Berlin')).in_days()
+        
         # table entry for date
         table_entry1 = allTables[ (allTables["Team"] == team1) & (allTables["Season"] == date_season) & (allTables["GameDay"] == gameDay) ]
         table_entry2 = allTables[ (allTables["Team"] == team2) & (allTables["Season"] == date_season) & (allTables["GameDay"] == gameDay) ]
@@ -293,11 +308,11 @@ def createMainFrame():
                              "TimeSinceLastGame1" : t_diff1, # Time in Hours since last game Team 1
                              "TimeSinceLastGame2" : t_diff2, # Time in Hours since last game Team 2
                              
-                             "LastGameOverTime1", # Was last game of Team 1 with overtime or penalty shootout
-                             "LastGameOverTime2", # Was last game of Team 2 with overtime or penalty shootout
+                             "LastGameOverTime1" : t1_overtime, # Was last game of Team 1 with overtime or penalty shootout
+                             "LastGameOverTime2" : t2_overtime, # Was last game of Team 2 with overtime or penalty shootout
                              
-                             "TimeSinceLastCoach1", # Time since Team 1 has current coach (if any)
-                             "TimeSinceLastCoach2", # Time since Team 2 has current coach (if any)    
+                             "TimeSinceLastCoach1" : t1_coach_diff, # Time since Team 1 has current coach (if any)
+                             "TimeSinceLastCoach2" : t2_coach_diff, # Time since Team 2 has current coach (if any)    
                              
                              
                              "CurrentPoints1" : table_entry1["points"].values[0], # current position in league Team 1
