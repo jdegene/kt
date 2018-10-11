@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# handles data transformation, model building and model application
+# builds one comprehensive dataframe from data_gathering.py data
 
 import numpy as np
 import pandas as pd
@@ -92,7 +92,7 @@ for actual modelling
 """
 
 # create final output DataFrame
-outDF = pd.DataFrame(colums=["Team1", 
+outDF = pd.DataFrame(columns=["Team1", 
                              "Team2", 
                              
                              "GameTimeOfDay", # Time of Game
@@ -233,7 +233,7 @@ for row_tup in allTeamResults.iterrows():
     lf_df1 = lf_df1.sort_values("Date")        
     lf_df2 = lf_df2.sort_values("Date") 
     # get last game with win (0 if last game was win) - reverse IsWin column as list and return index of first element that is 1
-    last_game_won1 = lf_df["IsWin"].tolist()[::-1].index(1)
+    last_game_won1 = lf_df1["IsWin"].tolist()[::-1].index(1)
     last_game_won2 = lf_df2["IsWin"].tolist()[::-1].index(1)
     
     
@@ -241,23 +241,25 @@ for row_tup in allTeamResults.iterrows():
     lf_df1_reidx = lf_df1.reset_index()
     lf_df2_reidx = lf_df2.reset_index()
      # get index of row above current row
-    t1_idx = lf_df1_reidx[lf_df1_reidx["Termin"] == row["Termin"]] - 1
-    t2_idx = lf_df1_reidx[lf_df1_reidx["Termin"] == row["Termin"]] - 1 
+    t1_idx = lf_df1_reidx[lf_df1_reidx["Termin"] == row["Termin"]].index - 1
+    t2_idx = lf_df2_reidx[lf_df2_reidx["Termin"] == row["Termin"]].index - 1 
     # get game time with index above
-    last_game_time1 = pendulum.from_format(lf_df1_reidx[t1_idx]["Termin"].values[0][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')  
-    last_game_time2 = pendulum.from_format(lf_df2_reidx[t2idx]["Termin"].values[0][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')  
+    last_game_time1 = pendulum.from_format(lf_df1_reidx.iloc[t1_idx]["Termin"].values[0][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')  
+    last_game_time2 = pendulum.from_format(lf_df2_reidx.iloc[t2_idx]["Termin"].values[0][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')  
     # get difference to current game in hours
     t_diff1 = (pendulum_time - last_game_time1).in_hours()
     t_diff2 = (pendulum_time - last_game_time2).in_hours()
     
     # was last game overtime 
-    t1_overtime = t1_idx["Overtime"].values[0]
-    t2_overtime = t2_idx["Overtime"].values[0]
+    t1_overtime = lf_df1_reidx.iloc[t1_idx]["Overtime"].values[0]
+    t2_overtime = lf_df2_reidx.iloc[t2_idx]["Overtime"].values[0]
     
     
     # time since last coach
-    t1_coaches = allCoaches[allCoaches["Team"] == getKickerTeamName(team1)].sort_values("von")
-    t2_coaches = allCoaches[allCoaches["Team"] == getKickerTeamName(team2)].sort_values("von")
+    t1_coaches = allCoaches[(allCoaches["Team"] == getKickerTeamName(team1)) & (allCoaches["von"] < pendulum_time.to_date_string())
+                           ].sort_values("von")
+    t2_coaches = allCoaches[(allCoaches["Team"] == getKickerTeamName(team2)) & (allCoaches["von"] < pendulum_time.to_date_string())
+                           ].sort_values("von")
     # time difference in days between game and last coach recruiting
     t1_coach_diff = (pendulum_time - pendulum.instance(t1_coaches.iloc[-1]["von"], tz='Europe/Berlin')).in_days()
     t2_coach_diff = (pendulum_time - pendulum.instance(t2_coaches.iloc[-1]["von"], tz='Europe/Berlin')).in_days()
@@ -267,10 +269,10 @@ for row_tup in allTeamResults.iterrows():
     l5Games1 = []
     l5Games2 = []
     for g in range(1,6):
-        t1_idx = lf_df1_reidx[lf_df1_reidx["Termin"] == row["Termin"]] - g
-        l5Games1.append(t1_idx["Score"].values[0])
-        t2_idx = lf_df1_reidx[lf_df1_reidx["Termin"] == row["Termin"]] - g 
-        l5Games2.append(t2_idx["Score"].values[0])        
+        t1_idx = lf_df1_reidx[lf_df1_reidx["Termin"] == row["Termin"]].index - g
+        l5Games1.append(lf_df1_reidx.iloc[t1_idx]["Score"].values[0])
+        t2_idx = lf_df2_reidx[lf_df2_reidx["Termin"] == row["Termin"]].index - g 
+        l5Games2.append(lf_df2_reidx.iloc[t2_idx]["Score"].values[0])        
     
     
     # Get last 3 direct games between both teams (manually account for teams that havent met 3 times, set 0:0 default)
