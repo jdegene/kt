@@ -82,7 +82,7 @@ def getCurrentSeason():
     return cur_season
 
 
-def getTableFromKicker(season, league, gameday, tableCSV):
+def getTableFromKicker(season, league, gameday, tableCSV, force = False):
     """
     Build a DF for each GameDay's table
     
@@ -91,7 +91,9 @@ def getTableFromKicker(season, league, gameday, tableCSV):
     
     :gameCSV: :tableCSV: csv files to store final data in
     
-    output: "AllTables.csv"
+    :output: "AllTables.csv"
+    
+    :force: reload table even if it already exists
     """
     
     # prepare/load outout DF
@@ -103,9 +105,10 @@ def getTableFromKicker(season, league, gameday, tableCSV):
         outDF = pd.DataFrame(columns=collist)
     
     # check if specific season, league, gameday combination is already in list and skip if so
-    if len(outDF[ (outDF['Season'] == season) & (outDF['League'] == league) & (outDF['GameDay'] == gameday)]) > 0:
-        print("Season ", season, "League ", league, "Gameday ", gameday, "  skipped")
-        return
+    if force == False:
+        if len(outDF[ (outDF['Season'] == season) & (outDF['League'] == league) & (outDF['GameDay'] == gameday)]) > 0:
+            print("Season ", season, "League ", league, "Gameday ", gameday, "  skipped")
+            return
     
     
     options = webdriver.firefox.options.Options()
@@ -327,7 +330,7 @@ def getTeamResults(inCsvFile, mode = 'u', rec_url = None):
     options.add_argument('-headless')
     driver = webdriver.Firefox(firefox_options=options)
     
-    driver.set_page_load_timeout(30)
+    driver.set_page_load_timeout(60)
 
     #recent_url = "http://www.kicker.de/news/fussball/bundesliga/vereine/1-bundesliga/2018-19/borussia-dortmund-17/vereinstermine.html"
     # extract recent season from rec_url
