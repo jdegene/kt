@@ -24,8 +24,9 @@ with open("C:/WorkExchange/Python/Git/kt/alias.json", "r", encoding="utf8") as j
 # # # # # # Input Processing # # # # # # # # # # #
 
 # Dynamo Dresden exsits with 2 different plain names in table; other writing errors fixed as well
-allTables.replace({"1. FC Dynamo Dresden" : "Dynamo Dresden",
-                   "Arminia Bielefeld (" : "Arminia Bielefeld"}, inplace = True)
+allTables.replace({'1. FC Dynamo Dresden' : 'Dynamo Dresden',
+                   "LR Ahlen" : 'Rot Weiss Ahlen',
+                   'Arminia Bielefeld (' : 'Arminia Bielefeld'}, inplace = True)
 
     
 for col in ["von", "bis"]:
@@ -64,7 +65,7 @@ def seasonFromDate(inDate):
     :inDate: pendulum datetime object
     """    
     if pendulum_time.month < 8:
-        cur_season = pendulum_time.year - 1999
+        cur_season = pendulum_time.year - 2001
     else:
         cur_season = pendulum_time.year - 2000
     return cur_season
@@ -186,7 +187,7 @@ allTeamResults = allTeamResults.replace('-', np.nan)
 
 # calculate field with goal difference
 allTeamResults["Intmd"] = allTeamResults["T1Goals"].astype(float, errors='ignore').subtract(allTeamResults["T2Goals"].astype(float, errors='ignore'))
-# divide by its self absolute value -> Hometeam win == 1, draw == 0, loss = -1
+# divide by its self absolute value ->  team1 win == 1, draw == 0, loss = -1
 allTeamResults["IsWin"] = allTeamResults["Intmd"].divide( allTeamResults["Intmd"].abs())
 # replace division by 0 values with 0, but only for existing results
 allTeamResults["IsWin"] = allTeamResults[allTeamResults["Score"] != "-:-"]["IsWin"].fillna(0)
@@ -204,13 +205,20 @@ skip_list = []
 for row_tup in allTeamResults.iterrows():
     row_index = row_tup[0]
     row = row_tup[1] # original row returns a tuple with first elem as index, second elem as data
-    
+
     # skip adding if game was not in 1st or 2nd BL
     if row["Wettbewerb"] not in ['BL', '2.BL']:
         continue
     
     # skip adding if game has not been played yet
     if row["Score"] == '-:-':
+        continue
+    
+    pendulum_time = pendulum.from_format(row["Termin"][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')  
+    date_season = seasonFromDate(pendulum_time)
+    
+    # skip if game is before 2005, as one seaosn before is needed for data gathering
+    if date_season < 5:
         continue
     
     
@@ -242,8 +250,7 @@ for row_tup in allTeamResults.iterrows():
 
    
     # # # time-related caluclations # # # 
-    pendulum_time = pendulum.from_format(row["Termin"][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')   
-    date_season = seasonFromDate(pendulum_time)
+    
     
     # game time in minutes since midnight, e.g. 13:00h == 780
     gameTimeMinutes = pendulum_time.hour * 60 + pendulum_time.minute        
@@ -275,8 +282,14 @@ for row_tup in allTeamResults.iterrows():
     t1_idx = lf_df1_reidx[lf_df1_reidx["Termin"] == row["Termin"]].index - 1
     t2_idx = lf_df2_reidx[lf_df2_reidx["Termin"] == row["Termin"]].index - 1 
     # get game time with index above
-    last_game_time1 = pendulum.from_format(lf_df1_reidx.iloc[t1_idx]["Termin"].values[0][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')  
-    last_game_time2 = pendulum.from_format(lf_df2_reidx.iloc[t2_idx]["Termin"].values[0][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')  
+    try:
+        last_game_time1 = pendulum.from_format(lf_df1_reidx.iloc[t1_idx]["Termin"].values[0][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin') 
+    except:
+        continue
+    try:
+        last_game_time2 = pendulum.from_format(lf_df2_reidx.iloc[t2_idx]["Termin"].values[0][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')  
+    except:
+        continue
     # get difference to current game in hours
     t_diff1 = (pendulum_time - last_game_time1).in_hours()
     t_diff2 = (pendulum_time - last_game_time2).in_hours()
@@ -292,8 +305,14 @@ for row_tup in allTeamResults.iterrows():
     t2_coaches = allCoaches[(allCoaches["Team"] == getKickerTeamName(team2)) & (allCoaches["von"] < pendulum_time.to_date_string())
                            ].sort_values("von")
     # time difference in days between game and last coach recruiting
-    t1_coach_diff = (pendulum_time - pendulum.instance(t1_coaches.iloc[-1]["von"], tz='Europe/Berlin')).in_days()
-    t2_coach_diff = (pendulum_time - pendulum.instance(t2_coaches.iloc[-1]["von"], tz='Europe/Berlin')).in_days()
+    try:
+        t1_coach_diff = (pendulum_time - pendulum.instance(t1_coaches.iloc[-1]["von"], tz='Europe/Berlin')).in_days()
+    except:
+        t1_coach_diff = 99999
+    try:
+        t2_coach_diff = (pendulum_time - pendulum.instance(t2_coaches.iloc[-1]["von"], tz='Europe/Berlin')).in_days()
+    except:
+        t2_coach_diff = 99999
     
     
     # Get last 5 games as list
@@ -369,10 +388,36 @@ for row_tup in allTeamResults.iterrows():
     
     # last 5 seasons league, 1 if all same as current league, 0 if at least one season was different
     t1_last5, t2_last5 = 0,0
-    if (len(set(getPastLeagues(team1, date_season))) == 1) & (getPastLeagues(team1, date_season)[0]==table_entry1["League"].values[0]):
-        t1_last5 = 1
-    if (len(set(getPastLeagues(team2, date_season))) == 1) & (getPastLeagues(team2, date_season)[0]==table_entry2["League"].values[0]):
-        t2_last5 = 1
+    try:
+        if (len(set(getPastLeagues(team1, date_season))) == 1) & (getPastLeagues(team1, date_season)[0]==table_entry1["League"].values[0]):
+            t1_last5 = 1
+    except:
+        pass
+    try:
+        if (len(set(getPastLeagues(team2, date_season))) == 1) & (getPastLeagues(team2, date_season)[0]==table_entry2["League"].values[0]):
+            t2_last5 = 1
+    except:
+        pass
+        
+    # last season positions, if no table exists, default to 3   
+    try:
+        lsp1 = ls_table_entry1["rank"].values[0]
+    except:
+        lsp2 = 3
+    try:
+        lsp2 = ls_table_entry2["rank"].values[0]
+    except:
+        lsp2 = 3
+    
+    # last season league, if no table exists, default to 3   
+    try:
+        lsl1 = ls_table_entry1["League"].values[0]
+    except:
+        lsl2 = 3
+    try:
+        lsl2 = ls_table_entry2["League"].values[0]
+    except:
+        lsl2 = 3
         
     
     
@@ -394,7 +439,10 @@ for row_tup in allTeamResults.iterrows():
                   & (allTeamResults["Season"] == date_season)
                   & (allTeamResults["Wettbewerb"] == "EL")  ] ) > 0:
             t2_el = 1
-
+    
+    # last resort to catch some small errors where team info from previous season is missing
+    if (len(table_entry1) < 1) or (len(table_entry2) < 1):
+        continue
     
     # append data to outDF
     outDF = outDF.append({"Team1" : team1, 
@@ -439,11 +487,11 @@ for row_tup in allTeamResults.iterrows():
                          "CurrentDraws2" : table_entry2["u"].values[0], # current draws in season of Team 2
                          "CurrentLoss2": table_entry2["v"].values[0], # current losses in season of Team 2                             
                                                       
-                         "LastSeasonPosition1" : ls_table_entry1["rank"].values[0], # last season's final position in league Team 1
-                         "LastSeasonPosition2" : ls_table_entry2["rank"].values[0], # last season's final position in league Team 2
+                         "LastSeasonPosition1" : lsp1 , # last season's final position in league Team 1
+                         "LastSeasonPosition2" : lsp2 , # last season's final position in league Team 2
                          
-                         "LastSeasonLeague1" : ls_table_entry1["League"].values[0], # last season league of Team 1
-                         "LastSeasonLeague2" : ls_table_entry2["League"].values[0], # last season league of Team 2
+                         "LastSeasonLeague1" : lsl1, # last season league of Team 1
+                         "LastSeasonLeague2" : lsl2, # last season league of Team 2
                          
                          "Past5YearsInThisLeague1" : t1_last5, # 1 if Team1 played in same league for past 5 years, else 0
                          "Past5YearsInThisLeague2" : t2_last5 , # 1 if Team2 played in same league for past 5 years, else 0 
