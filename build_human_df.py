@@ -219,7 +219,11 @@ for row_tup in allTeamResults.iterrows():
     team1 = translateTeam( row["Team"] )
     team2 = translateTeam( row["Gegner"] )
     
-    cur_league = int(row["Wettbewerb"][:1])
+    # determine numeric league
+    if row["Wettbewerb"] == 'BL':
+        cur_league = 1
+    else:
+        cur_league = 2
     result = row["Score"] 
     
     # skip game if already in list, if not in list, append to list then continue
