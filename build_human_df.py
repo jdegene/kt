@@ -95,6 +95,9 @@ for actual modelling
 outDF = pd.DataFrame(columns=["Team1", 
                              "Team2", 
                              
+                             "Team1_Home", # 1 if Team 1 is Hometeam, else 0
+                             "Team2_Home", # 1 if Team 2 is Hometeam, else 0
+                             
                              "GameTimeOfDay", # Time of Game
                              "GameWeekday", # Weekday of Game
                              "GameDay", # GameDay in League
@@ -207,7 +210,13 @@ for row_tup in allTeamResults.iterrows():
     skip_list.append( (team1, team2, row["Termin"]) )
     
     
-
+    # get home team 
+    if row["Wo"] == "H":
+        t1_home = 1
+        t2_home = 0
+    elif row["Wo"] == "A":
+        t1_home = 0
+        t2_home = 1
 
    
     # # # time-related caluclations # # # 
@@ -359,6 +368,9 @@ for row_tup in allTeamResults.iterrows():
     # append data to outDF
     outDF = outDF.append({"Team1" : team1, 
                          "Team2" : team2, 
+                         
+                         "Team1_Home" : t1_home, # 1 if Team 1 is Hometeam, else 0
+                         "Team2_Home" : t2_home, # 1 if Team 2 is Hometeam, else 0
                          
                          "GameTimeOfDay" : gameTimeMinutes , 
                          "GameWeekday" : pendulum_time.day_of_week, # Weekday of Game
