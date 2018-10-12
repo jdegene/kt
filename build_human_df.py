@@ -95,6 +95,9 @@ for actual modelling
 outDF = pd.DataFrame(columns=["Team1", 
                              "Team2", 
                              
+                             "CurLeague", # Current League
+                             "Result", # Game Endresult
+                             
                              "Team1_Home", # 1 if Team 1 is Hometeam, else 0
                              "Team2_Home", # 1 if Team 2 is Hometeam, else 0
                              
@@ -203,6 +206,9 @@ for row_tup in allTeamResults.iterrows():
     
     team1 = translateTeam( row["Team"] )
     team2 = translateTeam( row["Gegner"] )
+    
+    cur_league = int(row["Wettbewerb"][:1])
+    result = row["Score"] 
     
     # skip game if already in list, if not in list, append to list then continue
     if (team2, team1, row["Termin"]) in skip_list:
@@ -330,8 +336,16 @@ for row_tup in allTeamResults.iterrows():
     
     
     # table entry for date
-    table_entry1 = allTables[ (allTables["Team"] == team1) & (allTables["Season"] == date_season) & (allTables["GameDay"] == gameDay) ]
-    table_entry2 = allTables[ (allTables["Team"] == team2) & (allTables["Season"] == date_season) & (allTables["GameDay"] == gameDay) ]
+    if gameDay > 1:
+        table_entry1 = allTables[ (allTables["Team"] == team1) & (allTables["Season"] == date_season) & (allTables["GameDay"] == gameDay-1) ]
+        table_entry2 = allTables[ (allTables["Team"] == team2) & (allTables["Season"] == date_season) & (allTables["GameDay"] == gameDay-1) ]
+        
+    # create dummy df with all 0 data for first gameday
+    else:
+        table_entry1 = pd.DataFrame(data={'Season':date_season, 'League': cur_league, 'GameDay':gameDay, 'rank':0,
+       'Team':team1, 'sp':0, 'g':0, 'u':0, 'v':0, 'tore':0, 'diff':0, 'points':0}, index=[0])
+        table_entry2 = pd.DataFrame(data={'Season':date_season, 'League': cur_league, 'GameDay':gameDay, 'rank':0,
+       'Team':team2, 'sp':0, 'g':0, 'u':0, 'v':0, 'tore':0, 'diff':0, 'points':0}, index=[0])
     
     # last seasons last gameday entry
     ls_table_entry1 = allTables[ (allTables["Team"] == team1) & (allTables["Season"] == date_season-1) & (allTables["GameDay"] == 34) ]
@@ -343,6 +357,7 @@ for row_tup in allTeamResults.iterrows():
         t1_last5 = 1
     if (len(set(getPastLeagues(team2, date_season))) == 1) & (getPastLeagues(team2, date_season)[0]==table_entry2["League"].values[0]):
         t2_last5 = 1
+        
     
     
     # get if playing in CL or EL in current season
@@ -368,6 +383,9 @@ for row_tup in allTeamResults.iterrows():
     # append data to outDF
     outDF = outDF.append({"Team1" : team1, 
                          "Team2" : team2, 
+                         
+                         "CurLeague" : cur_league, # current league
+                         "Result" : result, # Game Endresult
                          
                          "Team1_Home" : t1_home, # 1 if Team 1 is Hometeam, else 0
                          "Team2_Home" : t2_home, # 1 if Team 2 is Hometeam, else 0
