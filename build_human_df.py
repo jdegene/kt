@@ -17,16 +17,22 @@ allTeamResults = pd.read_csv("E:/Test/AllTeamResults.csv", sep=";")
 allTables = pd.read_csv("E:/Test/AllTables.csv", sep=";")
 allCoaches = pd.read_csv("E:/Test/AllTeamCoaches.csv", sep=";")
 
-for col in ["von", "bis"]:
-    allCoaches[col] = pd.to_datetime(allCoaches[col], errors="coerce", format="%d.%m.%Y")
-
 with open("C:/WorkExchange/Python/Git/kt/alias.json", "r", encoding="utf8") as j:
     alias_json = json.load( j )
 
 
+# # # # # # Input Processing # # # # # # # # # # #
+
+# Dynamo Dresden exsits with 2 different plain names in table; other writing errors fixed as well
+allTables.replace({"1. FC Dynamo Dresden" : "Dynamo Dresden",
+                   "Arminia Bielefeld (" : "Arminia Bielefeld"}, inplace = True)
+
+    
+for col in ["von", "bis"]:
+    allCoaches[col] = pd.to_datetime(allCoaches[col], errors="coerce", format="%d.%m.%Y")
+
 # # # # # # # # # PANDAS OPTIONS # # # # # # # # #
 pd.set_option('display.max_columns', 100)
-
 
 
 # # # # # # # # # HELPER FUNCTIONS # # # # # # # # #
@@ -190,7 +196,6 @@ allTeamResults["IsWin"] = allTeamResults[allTeamResults["Score"] != "-:-"]["IsWi
 allTeamResults["Date"] = pd.to_datetime(allTeamResults["Termin"].str.slice(4), errors='coerce', format='%d.%m.%y %H:%M')
 
 
-# build human readale dataframe (= don't transform categorical data yet)
 
 # list will hold tuples of games, if same game is found in another teams list, its not put into df again
 skip_list = [] 
@@ -203,6 +208,13 @@ for row_tup in allTeamResults.iterrows():
     # skip adding if game was not in 1st or 2nd BL
     if row["Wettbewerb"] not in ['BL', '2.BL']:
         continue
+    
+    # skip adding if game has not been played yet
+    if row["Score"] == '-:-':
+        continue
+    
+    
+    # # # # Check things same for both teams # # # # # 
     
     team1 = translateTeam( row["Team"] )
     team2 = translateTeam( row["Gegner"] )
@@ -236,7 +248,7 @@ for row_tup in allTeamResults.iterrows():
     gameDay = int(row["Spt./Runde"][ : row["Spt./Runde"].find(".")]) 
     
     
-    
+    # # # # # # # # OTHERS # # # # # # # # # 
     
     
     # get no of games since last win
