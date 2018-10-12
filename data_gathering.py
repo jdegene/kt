@@ -316,7 +316,7 @@ def getTeamResults(inCsvFile, mode = 'u', rec_url = None):
     cur_season = getCurrentSeason()  
     
     # prepare/load outout DF
-    collist = ['Retrieve_Date', 'Team', 'Season', 'Gegner', 'Wettbewerb', 'Spt./Runde', 'Termin', 'Score',
+    collist = ['Retrieve_Date', 'Team', 'Season', 'Gegner', 'Wettbewerb', 'Spt./Runde', 'Termin', 'Wo', 'Score',
        'Overtime']
     try:
         outDF = pd.read_csv(inCsvFile, sep=";", encoding="utf8")
@@ -333,7 +333,7 @@ def getTeamResults(inCsvFile, mode = 'u', rec_url = None):
     
     if mode == 'a':
         
-        # work backwards through seasons
+        # work backwards through seasons, until 2004
         for i in range(int(rec_season), 3, -1):
                         
             # rebuild rec_url for each iteration with correct season
@@ -382,7 +382,7 @@ def getTeamResults(inCsvFile, mode = 'u', rec_url = None):
             pdTable['Team'] = split_url[-2]
             pdTable['Season'] = i
             
-            pdTable.rename(columns={"Ergebnis":"Wo"})
+            pdTable = pdTable.rename(columns={"Ergebnis":"Wo"})
             
             # append table
             outDF = outDF.append(pdTable, ignore_index=True)
