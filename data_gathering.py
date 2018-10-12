@@ -326,6 +326,8 @@ def getTeamResults(inCsvFile, mode = 'u', rec_url = None):
     options = webdriver.firefox.options.Options()
     options.add_argument('-headless')
     driver = webdriver.Firefox(firefox_options=options)
+    
+    driver.set_page_load_timeout(30)
 
     #recent_url = "http://www.kicker.de/news/fussball/bundesliga/vereine/1-bundesliga/2018-19/borussia-dortmund-17/vereinstermine.html"
     # extract recent season from rec_url
