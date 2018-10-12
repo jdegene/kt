@@ -12,7 +12,7 @@ If starting from scratch:
                                 Will automatically loop back to 2004, no outer loops needed
     
     3. Run teamResultsBuilder() -  this will use data from step and pass the URLs of each team
-                                   to getTeamData(), which downloads all results of the team per season
+                                   to getTeamResults(), which downloads all results of the team per season
                                    for all teams found in original table
                                    
                                    Run in mode "a" for all
@@ -302,7 +302,7 @@ def getOvertime(entry):
         return 0
 
 
-def getTeamData(inCsvFile, mode = 'u', rec_url = None):
+def getTeamResults(inCsvFile, mode = 'u', rec_url = None):
     """
     Get ALL games of a team by season, go back until season 2004
     
@@ -461,7 +461,7 @@ def getTeamData(inCsvFile, mode = 'u', rec_url = None):
 
 def teamResultsBuilder(teamListcsv="AllTeamPages.csv", mode = 'u', outCsv="AllTeamResults.csv"):
     """
-    Build a teamresults.csv using getTeamData() for all teams from getAllTeamPages() output
+    Build a teamresults.csv using getTeamResults() for all teams from getAllTeamPages() output
     
     output: "AllTeamResults.csv"
     """
@@ -482,7 +482,7 @@ def teamResultsBuilder(teamListcsv="AllTeamPages.csv", mode = 'u', outCsv="AllTe
             url = "/".join(url_split)
             
             
-            getTeamData(outCsv, mode = 'a', rec_url = url)
+            getTeamResults(outCsv, mode = 'a', rec_url = url)
     
     elif mode == 'u':
         # will effectivly delete present entry for club and season, fetch it again and append new data
@@ -495,7 +495,7 @@ def teamResultsBuilder(teamListcsv="AllTeamPages.csv", mode = 'u', outCsv="AllTe
             url = "/".join(url_split)
             
             
-            getTeamData(outCsv, mode = 'u', rec_url = url)
+            getTeamResults(outCsv, mode = 'u', rec_url = url)
 
 
 
