@@ -78,6 +78,8 @@ def create_goaldiff_model(ml_df):
     #print(dict(zip(unique, pcount )))
 
 
+def predict_outcome(model, inData):
+    return model.predict(inData.reshape(1,-1))[0]
 
 
 
