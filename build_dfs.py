@@ -590,7 +590,7 @@ def build_ml_df(human_csv="human_table.csv", ml_csv="ml.csv", alias_json=alias_j
         human_df = human_df.join(split_part)
     
     # drop non numeric results columns
-    human_df.drop(split_list + ['Unnamed: 0', 'Retrieve_Date', 'Game_Date'], axis=1, inplace=True)
+    human_df.drop(split_list + ['Retrieve_Date', 'Game_Date'], axis=1, inplace=True)
 
     human_df.to_csv(ml_csv, sep=";", index=False)
     
