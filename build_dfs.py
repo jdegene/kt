@@ -92,7 +92,7 @@ def getPastLeagues(team, start_season):
 
 # # # # # # # # # BUILD INPUT DF # # # # # # # # #
 
-def createMainFrame(allTeamResults=allTeamResults, allTables=allTables, allCoaches=allCoaches, outFile="human_table.csv"):
+def createHumanFrame(allTeamResults=allTeamResults, allTables=allTables, allCoaches=allCoaches, outFile="human_table.csv"):
     """
     Use basic data (data_gathering.py output) to create comprehensive DataFrame 
     for actual modelling
@@ -540,8 +540,8 @@ def createMainFrame(allTeamResults=allTeamResults, allTables=allTables, allCoach
                     ignore_index=True)
                                             
     
-    outDF.to_csv(outFile, sep=";", encoding="utf8")
+    outDF.to_csv(outFile, sep=";", encoding="utf8", index=False)
     
     
     
-    
+def build_ml_df    
