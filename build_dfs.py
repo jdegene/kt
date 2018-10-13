@@ -339,7 +339,7 @@ def createHumanFrame(allTeamResults=allTeamResults, allTables=allTables, allCoac
         
         
         # Get last 3 direct games between both teams (manually account for teams that havent met 3 times, set 0:0 default)
-        last_direct_df = lf_df1_reidx[ (lf_df1_reidx["Gegner"] == team2) ]
+        last_direct_df = lf_df1_reidx[ (lf_df1_reidx["Gegner"] == team2) & (lf_df1_reidx["Date"] < pendulum_time.to_datetime_string())].sort_values("Date")
         
         if len(last_direct_df) == 0:
             last_direct_3 = "0:0"
@@ -371,13 +371,13 @@ def createHumanFrame(allTeamResults=allTeamResults, allTables=allTables, allCoac
         
         else:
             last_direct_3 = last_direct_df.iloc[-3]["Score"]
-            last_direct_3_time = (pendulum.instance(last_direct_df.iloc[-3]["Date"]) - pendulum_time).in_days()
+            last_direct_3_time = (pendulum_time - pendulum.instance(last_direct_df.iloc[-3]["Date"])).in_days()
             
             last_direct_2 = last_direct_df.iloc[-2]["Score"]
-            last_direct_2_time = (pendulum.instance(last_direct_df.iloc[-2]["Date"]) - pendulum_time).in_days()
+            last_direct_2_time = (pendulum_time - pendulum.instance(last_direct_df.iloc[-2]["Date"])).in_days()
             
             last_direct_1 = last_direct_df.iloc[-1]["Score"]
-            last_direct_1_time = (pendulum.instance(last_direct_df.iloc[-1]["Date"]) - pendulum_time).in_days()
+            last_direct_1_time = (pendulum_time - pendulum.instance(last_direct_df.iloc[-1]["Date"])).in_days()
         
             
     
