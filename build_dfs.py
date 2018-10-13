@@ -283,9 +283,12 @@ def createHumanFrame(allTeamResults=allTeamResults, allTables=allTables, allCoac
         # sort lf_df by date, so last games are on bottom
         lf_df1 = lf_df1.sort_values("Date")        
         lf_df2 = lf_df2.sort_values("Date") 
+        # cut_off all games after current
+        lf_df1_cur = lf_df1[lf_df1["Date"] < pendulum_time.to_datetime_string()]  
+        lf_df2_cur = lf_df2[lf_df2["Date"] < pendulum_time.to_datetime_string()] 
         # get last game with win (0 if last game was win) - reverse IsWin column as list and return index of first element that is 1
-        last_game_won1 = lf_df1["IsWin"].tolist()[::-1].index(1)
-        last_game_won2 = lf_df2["IsWin"].tolist()[::-1].index(1)
+        last_game_won1 = lf_df1_cur["IsWin"].tolist()[::-1].index(1)
+        last_game_won2 = lf_df2_cur["IsWin"].tolist()[::-1].index(1)
         
         
         # get time since last game in hours       
