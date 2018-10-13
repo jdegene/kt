@@ -543,5 +543,86 @@ def createHumanFrame(allTeamResults=allTeamResults, allTables=allTables, allCoac
     outDF.to_csv(outFile, sep=";", encoding="utf8", index=False)
     
     
+
     
-def build_ml_df    
+def build_ml_df(human_csv="human_table.csv", ml_csv="ml.csv", alias_json=alias_json):
+    """
+    Will convert all categorial variables into numeric values. Right now:
+        - Team Names get number code used by kicker -> potential problem due to ordinal scale, 
+                                                       may implement one-hot encoding in future
+        - Results: will create 2 new variables: result_team1_win (1 if Team1 has won this game)
+                                                result_diff (goal difference, negative if team 1 lost)
+    
+    Will return 1 Dataframe (and save to ml.csv) to be used in 2 different models 
+    (exclude one variable in model, else it will be included for modelling):
+        1 = predicted variable is goals of Team1
+        2 = predicted variable is goal difference (negative if team 1 lost)
+    """
+    
+    human_df = pd.read_csv(human_csv, sep=";", encoding="utf8")
+    
+    # build a dictionary to convert team names to numerical kicker id using alias_json
+    id_dict = {}
+    for key in alias_json:
+        kicker_id_name = [ x for x in alias_json[key] if "-" in x ][0]
+        kicker_id = int(kicker_id_name[ kicker_id_name.rfind("-") + 1 : ])
+        id_dict[key] = kicker_id
+    
+    # replace team names by ids
+    human_df = human_df.replace(id_dict)
+    
+    # list of all columns containing results to be split
+    split_list =  ["Result", 'LastDirectGame1', 'LastDirectGame2', 'LastDirectGame3',
+                    'LastGameTeam1_1', 'LastGameTeam1_2',
+                    'LastGameTeam1_3', 'LastGameTeam1_4', 'LastGameTeam1_5',
+                    'LastGameTeam2_1', 'LastGameTeam2_2', 'LastGameTeam2_3',
+                    'LastGameTeam2_4', 'LastGameTeam2_5']
+    
+    for col in split_list:
+        # splits result, puts into new cols named 0 and 1
+        split_part = human_df[col].str.split(":", expand=True) 
+        
+        # overwrite column 1 (containing goals of team 2) with goal difference
+        split_part[1] = split_part[0].astype(int) - split_part[1].astype(int) 
+        
+        # rename columns and append back on original dataframe        
+        split_part.rename(columns={0:col+"_t1goals", 1:col+"_goaldiff"}, inplace=True)        
+        human_df = human_df.join(split_part)
+    
+    # drop non numeric results columns
+    human_df.drop(split_list + ['Unnamed: 0', 'Retrieve_Date', 'Game_Date'], axis=1, inplace=True)
+
+    human_df.to_csv(ml_csv, sep=";", index=False)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
