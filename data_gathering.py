@@ -559,6 +559,9 @@ def getCoaches(teamListcsv="AllTeamPages.csv", mode = "u", outCsv = "AllTeamCoac
     teamList.sort_values("Season", ascending=False, inplace=True)
     single_list = teamList.drop_duplicates("Team")
     
+    # only fetch teams that currently are in league 1 or 2
+    single_list = single_list[single_list["Season"] == single_list["Season"].max()] 
+    
     if mode == "u":    
         url_list = single_list["Team_URL"]
     
