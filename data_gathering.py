@@ -446,7 +446,7 @@ def getTeamResults(inCsvFile, mode = 'u', rec_url = None):
         pdTable['Team'] = split_url[-2]
         pdTable['Season'] = cur_season
         
-        pdTable.rename(columns={"Ergebnis":"Wo"})
+        pdTable = pdTable.rename(columns={"Ergebnis":"Wo"})
         
         # append table
         outDF = outDF.append(pdTable, ignore_index=True)
