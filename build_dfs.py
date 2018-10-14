@@ -8,14 +8,18 @@ import json
 
 import pendulum
 
+import data_gathering
+
 
 
 # # # # # # # # # LOAD RAW DATA # # # # # # # # #
 
-allTeamPages = pd.read_csv("E:/Test/AllTeamPages.csv", sep=";")
-allTeamResults = pd.read_csv("E:/Test/AllTeamResults.csv", sep=";")
-allTables = pd.read_csv("E:/Test/AllTables.csv", sep=";")
-allCoaches = pd.read_csv("E:/Test/AllTeamCoaches.csv", sep=";")
+data_folder = "C:/Stuff/Projects/kicktipp/"
+
+allTeamPages = pd.read_csv(data_folder + "AllTeamPages.csv", sep=";")
+allTeamResults = pd.read_csv(data_folder + "AllTeamResults.csv", sep=";")
+allTables = pd.read_csv(data_folder + "AllTables.csv", sep=";")
+allCoaches = pd.read_csv(data_folder + "AllTeamCoaches.csv", sep=";")
 
 with open("C:/WorkExchange/Python/Git/kt/alias.json", "r", encoding="utf8") as j:
     alias_json = json.load( j )
@@ -602,20 +606,42 @@ def build_ml_df(human_csv="human_table.csv", ml_csv="ml.csv", alias_json=alias_j
     
     
     
+def gameDayGames(gameday, league):
+    """
+    returns list of 9 Games of requested gameday using AllTeamResults.csv
+    """
     
     
+    cur_season = data_gathering.getCurrentSeason()
     
+    # filter by league and season
+    league_dict = {1: "BL", 2: "2.BL"}
+    curSeason_TeamResults = allTeamResults[ (allTeamResults["Season"]==cur_season) &
+                                            (allTeamResults["Wettbewerb"] ==  league_dict[league])]
     
+    # get numerical column for gameday
+    curSeason_TeamResults["gd"] =  curSeason_TeamResults.apply(lambda row: int(row["Spt./Runde"][ : row["Spt./Runde"].find(".")]), 
+                                                               axis=1)
     
+    # filter by passed gameday     
+    relevant_TeamResults = curSeason_TeamResults[ (curSeason_TeamResults["gd"] == gameday)  ]
     
+    # get kicker id for home team
+    relevant_TeamResults["id1"] = relevant_TeamResults.apply(lambda row: int(row["Team"][ row["Team"].rfind("-") + 1 : ]), 
+                                                               axis=1)
+    # get kicker id for Gegner
+    relevant_TeamResults["id2"] = relevant_TeamResults.apply(lambda row: int(getKickerTeamName(row["Gegner"])[ getKickerTeamName(row["Gegner"]).rfind("-") + 1 : ]), 
+                                                               axis=1)
     
+    # build a unique ID combo of both, smaller number first
+    relevant_TeamResults["uid"] = relevant_TeamResults.apply(lambda row: str(min(row["id1"], row["id2"]))+
+                                                                         str(max(row["id1"], row["id2"])  ), 
+                                                                axis=1)
     
+    # drop duplicates so each game is exactly once present
+    relevant_TeamResults.drop_duplicates("uid", inplace=True)
     
-    
-    
-    
-    
-    
+    return relevant_TeamResults
     
     
     
