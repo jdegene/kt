@@ -15,7 +15,7 @@ if __name__ == "__main__":
     
     data_folder = "C:/Stuff/Projects/kicktipp/"
     
-    league_1_gameday = 8   
+    league_1_gameday = 8  
     league_2_gameday = 10
     
     
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         
         t1goals = max(t1goals, goaldiff) # account for cases, goaldiff is larger than shot goals
         
-        team_str = human_df_2.iloc[row[0]]["Team1"] + " : " +  human_df_2.iloc[row[0]]["Team2"]
+        team_str = human_df_1.iloc[row[0]]["Team1"] + " : " +  human_df_1.iloc[row[0]]["Team2"]
         team_str = team_str + ''.join([" " for x in range(40 - len(team_str))] ) 
         print(team_str + "\t--->\t", t1goals[0], ":", t1goals[0]-goaldiff[0])
     

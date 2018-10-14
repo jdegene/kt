@@ -16,7 +16,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 
 # Load main data frame, use EITHER Result_t1goals or Result_goaldiff as Y
-ml_df = pd.read_csv("E:/Test/ml.csv", sep=";")
+#ml_df = pd.read_csv("E:/Test/ml.csv", sep=";")
 
 
 def create_t1goals_model(ml_df):
