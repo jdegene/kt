@@ -5,12 +5,15 @@
 import numpy as np
 import pandas as pd
 import json
+import warnings
+
 
 import pendulum
 
 import data_gathering
 
-
+# disable warnings from pandas
+warnings.filterwarnings('ignore')
 
 # # # # # # # # # LOAD RAW DATA # # # # # # # # #
 
@@ -342,7 +345,7 @@ def createHumanFrame(allTeamResults=allTeamResults, allTables=allTables, allCoac
             t1_idx = lf_df1_reidx[lf_df1_reidx["Termin"] == row["Termin"]].index - g
             l5Games1.append(lf_df1_reidx.iloc[t1_idx]["Score"].values[0])
             t2_idx = lf_df2_reidx[lf_df2_reidx["Termin"] == row["Termin"]].index - g 
-            l5Games2.append(lf_df2_reidx.iloc[t2_idx]["Score"].values[0])        
+            l5Games2.append(lf_df2_reidx.iloc[t2_idx]["Score"].values[0])     
         
         
         # Get last 3 direct games between both teams (manually account for teams that havent met 3 times, set 0:0 default)
@@ -844,11 +847,15 @@ def buildPredictDF(inDF, allTeamResults=allTeamResults):
         # Get last 5 games as list
         l5Games1 = []
         l5Games2 = []
-        for g in range(1,6):
-            t1_idx = lf_df1_reidx[lf_df1_reidx["Termin"] == row["Termin"]].index - g
-            l5Games1.append(lf_df1_reidx.iloc[t1_idx]["Score"].values[0])
-            t2_idx = lf_df2_reidx[lf_df2_reidx["Termin"] == row["Termin"]].index - g 
-            l5Games2.append(lf_df2_reidx.iloc[t2_idx]["Score"].values[0])   
+        lf_df1_cur = lf_df1_cur[lf_df1_cur["Score"] != "-:-"].reset_index()
+        lf_df2_cur = lf_df2_cur[lf_df2_cur["Score"] != "-:-"].reset_index()
+        for g in range(0,5):
+            #t1_idx = lf_df1_reidx[lf_df1_reidx["Termin"] == row["Termin"]].index - g
+            t1_idx = lf_df1_cur.index[-1] - g
+            l5Games1.append(lf_df1_cur.iloc[t1_idx]["Score"])
+            #t2_idx = lf_df2_reidx[lf_df2_reidx["Termin"] == row["Termin"]].index - g 
+            t2_idx = lf_df2_cur.index[-1] - g
+            l5Games2.append(lf_df2_cur.iloc[t2_idx]["Score"])     
         
         # Get last 3 direct games between both teams (manually account for teams that havent met 3 times, set 0:0 default)
         last_direct_df = lf_df1_reidx[ (lf_df1_reidx["Gegner"] == team2) & (lf_df1_reidx["Date"] < pendulum_time.to_datetime_string())].sort_values("Date")
