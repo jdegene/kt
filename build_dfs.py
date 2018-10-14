@@ -566,7 +566,11 @@ def build_ml_df(human_csv="human_table.csv", ml_csv="ml.csv", alias_json=alias_j
         2 = predicted variable is goal difference (negative if team 1 lost)
     """
     
-    human_df = pd.read_csv(human_csv, sep=";", encoding="utf8")
+    # input can be a csv file or a dataframe
+    if type(human_csv) == str:
+        human_df = pd.read_csv(human_csv, sep=";", encoding="utf8")
+    else:
+        human_df = human_csv
     
     # build a dictionary to convert team names to numerical kicker id using alias_json
     id_dict = {}
@@ -586,6 +590,9 @@ def build_ml_df(human_csv="human_table.csv", ml_csv="ml.csv", alias_json=alias_j
                     'LastGameTeam2_4', 'LastGameTeam2_5']
     
     for col in split_list:
+        if col not in human_df.columns:
+            continue
+        
         # splits result, puts into new cols named 0 and 1
         split_part = human_df[col].str.split(":", expand=True) 
         
@@ -597,6 +604,7 @@ def build_ml_df(human_csv="human_table.csv", ml_csv="ml.csv", alias_json=alias_j
         human_df = human_df.join(split_part)
     
     # drop non numeric results columns
+    split_list = [i for i in split_list if i in human_df.columns]
     human_df.drop(split_list + ['Retrieve_Date', 'Game_Date'], axis=1, inplace=True)
     
     if ml_csv == None:
@@ -669,7 +677,6 @@ def buildPredictDF(inDF, allTeamResults=allTeamResults):
                                  "Team2", 
                                  
                                  "CurLeague", # Current League
-                                 "Result", # Game Endresult
                                  
                                  "Team1_Home", # 1 if Team 1 is Hometeam, else 0
                                  "Team2_Home", # 1 if Team 2 is Hometeam, else 0
@@ -773,7 +780,7 @@ def buildPredictDF(inDF, allTeamResults=allTeamResults):
             cur_league = 1
         else:
             cur_league = 2
-        result = row["Score"] 
+        #result = row["Score"] 
         
         # get home team 
         if row["Wo"] == "H":
@@ -954,7 +961,6 @@ def buildPredictDF(inDF, allTeamResults=allTeamResults):
                              "Team2" : team2, 
                              
                              "CurLeague" : cur_league, # current league
-                             "Result" : result, # Game Endresult
                              
                              "Team1_Home" : t1_home, # 1 if Team 1 is Hometeam, else 0
                              "Team2_Home" : t2_home, # 1 if Team 2 is Hometeam, else 0
