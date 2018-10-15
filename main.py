@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Handles function calling for data update, data crunching, modeling and input to kt
+# Change league_1_gameday and league_2_gameday, then simply run entire file
 
 import pandas as pd
 
@@ -41,16 +42,19 @@ def makeTeamsOneHot(df, colList=None):
     For trainig data straightforward. For predict data some columns are missing 
         (only half the teams present in predict data-set -> 
              manually create dummy columns from colList, fill with 0)
+        
+    :colList: use column list from training ml dataset
     """    
     
     one_hot_df = pd.get_dummies(df, columns=["Team1","Team2"])
     
     if colList is not None:
+        # remove y-variables from predicitive column list (they dont exist for future games)
         colList = [x for x in colList if x not in ["Result_goaldiff", "Result_t1goals"] ]
         for col in colList:
             if col not in one_hot_df:
                 one_hot_df[col] = 0
-    
+        
         one_hot_df = one_hot_df[colList]
     
     return one_hot_df
