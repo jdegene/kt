@@ -35,6 +35,28 @@ def getVotes(i):
 
 
 
+def makeTeamsOneHot(df, colList=None):
+    """
+    Transforms columns Team1 and Team2 of passed DF into one-hot encoded vectors
+    For trainig data straightforward. For predict data some columns are missing 
+        (only half the teams present in predict data-set -> 
+             manually create dummy columns from colList, fill with 0)
+    """    
+    
+    one_hot_df = pd.get_dummies(df, columns=["Team1","Team2"])
+    
+    if colList is not None:
+        colList = [x for x in colList if x not in ["Result_goaldiff", "Result_t1goals"] ]
+        for col in colList:
+            if col not in one_hot_df:
+                one_hot_df[col] = 0
+    
+        one_hot_df = one_hot_df[colList]
+    
+    return one_hot_df
+
+
+
 if __name__ == "__main__":
     
     data_folder = "C:/Stuff/Projects/kicktipp/"
@@ -48,7 +70,14 @@ if __name__ == "__main__":
                              allTeamResults = data_folder + "AllTeamResults.csv", 
                              allTables = data_folder + "AllTables.csv", 
                              allCoaches = data_folder + "AllTeamCoaches.csv")
+          
+    # get training dataset, make teams one-hot
+    ml_df = pd.read_csv(data_folder + "ml.csv", sep=";")
+    ml_df_oh = makeTeamsOneHot(ml_df)
     
+    # build models (for now, build new model for every run)    
+    t1goals_model = model.create_t1goals_model(ml_df_oh)
+    goaldiff_model = model.create_goaldiff_model(ml_df_oh)
     
     
     # Create human df for upcoming games for both leagues
@@ -62,30 +91,29 @@ if __name__ == "__main__":
     ml_df1 = build_dfs.build_ml_df(human_csv=human_df_1, ml_csv=None)
     ml_df2 = build_dfs.build_ml_df(human_csv=human_df_2, ml_csv=None)
     
-    
-    # build models (for now, build new model for every run)    
-    ml_df = pd.read_csv(data_folder + "ml.csv", sep=";")
-    t1goals_model = model.create_t1goals_model(ml_df)
-    goaldiff_model = model.create_goaldiff_model(ml_df)
+    # convert predict mls to one-hot
+    ml_df1_oh = makeTeamsOneHot(ml_df1, colList = ml_df_oh.columns)
+    ml_df2_oh = makeTeamsOneHot(ml_df2, colList = ml_df_oh.columns)
+
     
     
     # feed predict arrays into models and return output
     print("League 1 results for GameDay", league_1_gameday, "\n")
-    for row in ml_df1.iterrows():
+    for row in ml_df1_oh.iterrows():
         t1goals = t1goals_model.predict(row[1].values.reshape(1, -1))
         goaldiff = goaldiff_model.predict(row[1].values.reshape(1, -1))
         
         t1goals = max(t1goals, goaldiff) # account for cases, goaldiff is larger than shot goals
         
         # will produce at lot of draws
-        # t1goals,goaldiff = getVotes(10)            
+        #t1goals,goaldiff = getVotes(10)            
         
         team_str = human_df_1.iloc[row[0]]["Team1"] + " : " +  human_df_1.iloc[row[0]]["Team2"]
         team_str = team_str + ''.join([" " for x in range(40 - len(team_str))] ) 
         print(team_str + "\t--->\t", t1goals[0], ":", t1goals[0]-goaldiff[0])
     
     print("\nLeague 2 results for GameDay", league_2_gameday, "\n")
-    for row in ml_df2.iterrows():
+    for row in ml_df2_oh.iterrows():
         t1goals = t1goals_model.predict(row[1].values.reshape(1, -1))
         goaldiff = goaldiff_model.predict(row[1].values.reshape(1, -1))
         
