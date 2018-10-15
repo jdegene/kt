@@ -31,7 +31,7 @@ def getVotes(i):
     most_common_goal = max(set(goalList), key=goalList.count)    
     most_common_diff = max(set(diffList), key=diffList.count)
     
-    return most_common_goal, most_common_diff
+    return [most_common_goal], [most_common_diff]
 
 
 
@@ -77,9 +77,8 @@ if __name__ == "__main__":
         
         t1goals = max(t1goals, goaldiff) # account for cases, goaldiff is larger than shot goals
         
-        
-        t1goals,goaldiff = getVotes(10)
-            
+        # will produce at lot of draws
+        # t1goals,goaldiff = getVotes(10)            
         
         team_str = human_df_1.iloc[row[0]]["Team1"] + " : " +  human_df_1.iloc[row[0]]["Team2"]
         team_str = team_str + ''.join([" " for x in range(40 - len(team_str))] ) 
