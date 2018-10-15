@@ -19,7 +19,7 @@ from sklearn.tree import DecisionTreeClassifier
 #ml_df = pd.read_csv("E:/Test/ml.csv", sep=";")
 
 
-def create_t1goals_model(ml_df):
+def create_t1goals_model(ml_df, silent=0):
     # create new dfs with exactly one output variable
     ml_df_g1 = ml_df.drop("Result_goaldiff", axis=1)
 
@@ -39,7 +39,8 @@ def create_t1goals_model(ml_df):
     
     # evaluate predictions
     accuracy = accuracy_score(y_test, predictions)
-    print("Accuracy: %.2f%%" % (accuracy * 100.0))
+    if silent != 1:
+        print("Accuracy: %.2f%%" % (accuracy * 100.0))
     
     return model
     
@@ -48,7 +49,7 @@ def create_t1goals_model(ml_df):
     #print(dict(zip(unique, pcount )))
 
 
-def create_goaldiff_model(ml_df):
+def create_goaldiff_model(ml_df,silent=0):
     # create new dfs with exactly one output variable
     ml_df_diff = ml_df.drop("Result_t1goals", axis=1)
     
@@ -69,7 +70,8 @@ def create_goaldiff_model(ml_df):
     
     # evaluate predictions
     accuracy = accuracy_score(y_test, predictions)
-    print("Accuracy: %.2f%%" % (accuracy * 100.0))
+    if silent != 1:
+        print("Accuracy: %.2f%%" % (accuracy * 100.0))
 
     return model
 
