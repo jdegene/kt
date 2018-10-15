@@ -9,6 +9,30 @@ import build_dfs
 import model
 
 
+def getVotes(i):
+    """
+    Run model i times, use most prevalent outputs for goals and goaldiff
+    """
+    goalList = []
+    diffList = []
+    for i in range(i):
+
+        t1goals_model = model.create_t1goals_model(ml_df, silent=1)
+        goaldiff_model = model.create_goaldiff_model(ml_df,silent=1)
+        
+        t1goals = t1goals_model.predict(row[1].values.reshape(1, -1))
+        goaldiff = goaldiff_model.predict(row[1].values.reshape(1, -1))
+    
+        t1goals = max(t1goals, goaldiff) 
+        
+        goalList.append(t1goals[0])
+        diffList.append(goaldiff[0])
+    
+    most_common_goal = max(set(goalList), key=goalList.count)    
+    most_common_diff = max(set(diffList), key=diffList.count)
+    
+    return most_common_goal, most_common_diff
+
 
 
 if __name__ == "__main__":
@@ -52,6 +76,10 @@ if __name__ == "__main__":
         goaldiff = goaldiff_model.predict(row[1].values.reshape(1, -1))
         
         t1goals = max(t1goals, goaldiff) # account for cases, goaldiff is larger than shot goals
+        
+        
+        t1goals,goaldiff = getVotes(10)
+            
         
         team_str = human_df_1.iloc[row[0]]["Team1"] + " : " +  human_df_1.iloc[row[0]]["Team2"]
         team_str = team_str + ''.join([" " for x in range(40 - len(team_str))] ) 
