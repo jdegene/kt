@@ -87,9 +87,11 @@ if __name__ == "__main__":
     # Create human df for upcoming games for both leagues
     league_1_games = build_dfs.gameDayGames(league_1_gameday, 1).sort_values("Date")
     human_df_1 = build_dfs.buildPredictDF(league_1_games)
+    human_df_1 = build_dfs.switch_teams(human_df_1)
     
     league_2_games = build_dfs.gameDayGames(league_2_gameday, 2).sort_values("Date")
     human_df_2 = build_dfs.buildPredictDF(league_2_games)
+    human_df_2 = build_dfs.switch_teams(human_df_2)
     
     # build machine df from both datasets
     ml_df1 = build_dfs.build_ml_df(human_csv=human_df_1, ml_csv=None)

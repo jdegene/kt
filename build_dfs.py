@@ -553,6 +553,50 @@ def createHumanFrame(allTeamResults=allTeamResults, allTables=allTables, allCoac
     outDF.to_csv(outFile, sep=";", encoding="utf8", index=False)
     
     
+def switch_teams(df):
+    """
+    Switches Team1 and Team2 in dataframe, so hometeam is always Team1
+    """
+    # get a new row with my own index, use this to rebuild df later in exact same order
+    df["my_idx"] =  range(len(df))
+    
+    is_okay_df = df[df['Team1_Home'] == 1]
+    switch_df =  df[df['Team1_Home'] == 0]
+    
+    switch_df = switch_df.rename(columns={'Team1' : 'Team2', 'Team2' : 'Team1',
+                                          'GamesSinceLastWin1' : 'GamesSinceLastWin2', 'GamesSinceLastWin2' : 'GamesSinceLastWin1',
+                                          'TimeSinceLastGame1' : 'TimeSinceLastGame2', 'TimeSinceLastGame2' : 'TimeSinceLastGame1', 
+                                          'LastGameOverTime1' : 'LastGameOverTime2', 'LastGameOverTime2' : 'LastGameOverTime1',
+                                          'TimeSinceLastCoach1' : 'TimeSinceLastCoach2', 'TimeSinceLastCoach2' : 'TimeSinceLastCoach1',
+                                          'CurrentPoints1' : 'CurrentPoints2', 'CurrentPoints2' : 'CurrentPoints1',
+                                          'CurrentPosition1' : 'CurrentPosition2', 'CurrentPosition2' : 'CurrentPosition1',
+                                          'CurrentGoalDif1' : 'CurrentGoalDif2', 'CurrentGoalDif2' : 'CurrentGoalDif1',
+                                          'CurrentWin1' : 'CurrentWin2', 'CurrentWin2' : 'CurrentWin1', 
+                                          'CurrentDraws1' : 'CurrentDraws2','CurrentDraws2' : 'CurrentDraws1',
+                                          'CurrentLoss1' : 'CurrentLoss2','CurrentLoss2' : 'CurrentLoss1',
+                                          'LastSeasonPosition1' : 'LastSeasonPosition2', 'LastSeasonPosition2' : 'LastSeasonPosition1',
+                                          'LastSeasonLeague1' : 'LastSeasonLeague2', 'LastSeasonLeague2' : 'LastSeasonLeague1', 
+                                          'Past5YearsInThisLeague1' : 'Past5YearsInThisLeague2', 'Past5YearsInThisLeague2' : 'Past5YearsInThisLeague1',
+                                          'LastGameTeam1_1' : 'LastGameTeam2_1', 'LastGameTeam2_1' : 'LastGameTeam1_1',
+                                          'LastGameTeam1_2' : 'LastGameTeam2_2','LastGameTeam2_2' : 'LastGameTeam1_2',
+                                          'LastGameTeam1_3' : 'LastGameTeam2_3', 'LastGameTeam2_3' : 'LastGameTeam1_3',
+                                          'LastGameTeam1_4' : 'LastGameTeam2_4', 'LastGameTeam2_4' : 'LastGameTeam1_4',
+                                          'LastGameTeam1_5' : 'LastGameTeam2_5','LastGameTeam2_5' : 'LastGameTeam1_5',
+                                          'CL_candidate1' : 'CL_candidate2', 'CL_candidate2' : 'CL_candidate1',
+                                          'EL_candidate1' : 'EL_candidate2', 'EL_candidate2' : 'EL_candidate1'})
+     
+    # last direct game results must be switched as well
+    man_switch = ['LastDirectGame1', 'LastDirectGame2', 'LastDirectGame3']
+    for col in man_switch:
+        switch_df[col] = switch_df.apply(lambda row: row[col][::-1], axis=1)
+        
+    switch_df = switch_df[is_okay_df.columns]
+    is_okay_df = is_okay_df.append(switch_df)
+    
+    is_okay_df = is_okay_df.sort_values("my_idx")
+    is_okay_df.drop(["my_idx", "Team1_Home", "Team2_Home"], axis=1, inplace=True)
+    
+    return is_okay_df
 
     
 def build_ml_df(human_csv="human_table.csv", ml_csv="ml.csv", alias_json=alias_json):
@@ -574,6 +618,10 @@ def build_ml_df(human_csv="human_table.csv", ml_csv="ml.csv", alias_json=alias_j
         human_df = pd.read_csv(human_csv, sep=";", encoding="utf8")
     else:
         human_df = human_csv
+    
+    # switch team1 and team2, so team1 is always home team, delete IsHome columns after
+    #human_df = switch_teams(human_df)
+    
     
     # build a dictionary to convert team names to numerical kicker id using alias_json
     id_dict = {}
@@ -656,6 +704,9 @@ def gameDayGames(gameday, league):
     
     # drop duplicates so each game is exactly once present
     relevant_TeamResults.drop_duplicates("uid", inplace=True)
+    
+    # get Date field in this step, to enable sorting
+    relevant_TeamResults["Date"] = pd.to_datetime(relevant_TeamResults["Termin"].str.slice(4), errors='coerce', format='%d.%m.%y %H:%M')
     
     relevant_TeamResults.drop(["Unnamed: 0", "id1", "id2", "uid"], axis=1, inplace=True)
     
