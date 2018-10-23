@@ -50,7 +50,7 @@ def makeTeamsOneHot(df, colList=None):
     
     if colList is not None:
         # remove y-variables from predicitive column list (they dont exist for future games)
-        colList = [x for x in colList if x not in ["Result_goaldiff", "Result_t1goals"] ]
+        colList = [x for x in colList if x not in ["Result_goaldiff", "Result_t1goals", "Team1_Home", "Team2_Home"] ]
         for col in colList:
             if col not in one_hot_df:
                 one_hot_df[col] = 0
@@ -65,23 +65,27 @@ if __name__ == "__main__":
     
     data_folder = "C:/Stuff/Projects/kicktipp/"
     
-    league_1_gameday = 8  
-    league_2_gameday = 10
+    league_1_gameday = 9  
+    league_2_gameday = 11
     
-    
+    """
     # First update all data
     data_gathering.updateAll(allTeamPages =  data_folder + "AllTeamPages.csv", 
                              allTeamResults = data_folder + "AllTeamResults.csv", 
                              allTables = data_folder + "AllTables.csv", 
                              allCoaches = data_folder + "AllTeamCoaches.csv")
-          
+    """
+    
     # get training dataset, make teams one-hot
     ml_df = pd.read_csv(data_folder + "ml.csv", sep=";")
     ml_df_oh = makeTeamsOneHot(ml_df)
     
+    # remove Team1_Home and T2_Home from model creation df as well
+    colList = [c for c in ml_df_oh.columns if c not in ['Team1_Home', 'Team2_Home'] ]
+    
     # build models (for now, build new model for every run)    
-    t1goals_model = model.create_t1goals_model(ml_df_oh)
-    goaldiff_model = model.create_goaldiff_model(ml_df_oh)
+    t1goals_model = model.create_t1goals_model(ml_df_oh[colList])
+    goaldiff_model = model.create_goaldiff_model(ml_df_oh[colList])
     
     
     # Create human df for upcoming games for both leagues
