@@ -65,8 +65,8 @@ if __name__ == "__main__":
     
     data_folder = "C:/Stuff/Projects/kicktipp/"
     
-    league_1_gameday = 9  
-    league_2_gameday = 11
+    league_1_gameday = 10  
+    league_2_gameday = 12
     
     """
     # First update all data
@@ -74,18 +74,18 @@ if __name__ == "__main__":
                              allTeamResults = data_folder + "AllTeamResults.csv", 
                              allTables = data_folder + "AllTables.csv", 
                              allCoaches = data_folder + "AllTeamCoaches.csv")
-    """
     
+    # then build new human and ml dataframe
+    build_dfs.createHumanFrame(outFile=data_folder + "human_table.csv")
+    build_dfs.build_ml_df(human_csv=data_folder + "human_table.csv", ml_csv=data_folder + "ml.csv")
+    """  
     # get training dataset, make teams one-hot
     ml_df = pd.read_csv(data_folder + "ml.csv", sep=";")
     ml_df_oh = makeTeamsOneHot(ml_df)
     
-    # remove Team1_Home and T2_Home from model creation df as well
-    colList = [c for c in ml_df_oh.columns if c not in ['Team1_Home', 'Team2_Home'] ]
-    
     # build models (for now, build new model for every run)    
-    t1goals_model = model.create_t1goals_model(ml_df_oh[colList])
-    goaldiff_model = model.create_goaldiff_model(ml_df_oh[colList])
+    t1goals_model = model.create_t1goals_model(ml_df_oh)
+    goaldiff_model = model.create_goaldiff_model(ml_df_oh)
     
     
     # Create human df for upcoming games for both leagues
