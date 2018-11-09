@@ -154,6 +154,8 @@ def createHumanFrame(allTeamResults=allTeamResults, allTables=allTables, allCoac
     :outFile: will store the data, if already contains games, these will be skipped in consecutive runs
     """
     
+    print("Creating Human Frame")
+    
     # try loading output file or create new one if path is given
     try:
         outDF = pd.read_csv(outFile, sep=";", encoding="utf8")
@@ -267,6 +269,8 @@ def createHumanFrame(allTeamResults=allTeamResults, allTables=allTables, allCoac
     for row_tup in allTeamResults.iterrows():
         row_index = row_tup[0]
         row = row_tup[1] # original row returns a tuple with first elem as index, second elem as data
+        
+        print('\r', '{} / {}  '.format(row_index, len(allTeamResults)), end="")
     
         # skip adding if game was not in 1st or 2nd BL
         if row["Wettbewerb"] not in ['BL', '2.BL']:
@@ -616,6 +620,8 @@ def build_ml_df(human_csv="human_table.csv", ml_csv="ml.csv", alias_json=alias_j
         2 = predicted variable is goal difference (negative if team 1 lost)
     """
     
+    print("Creating ML Frame")
+    
     # input can be a csv file or a dataframe
     if type(human_csv) == str:
         human_df = pd.read_csv(human_csv, sep=";", encoding="utf8")
@@ -827,6 +833,7 @@ def buildPredictDF(inDF, allTeamResults=allTeamResults):
         row = row_tup[1]
         
         pendulum_time = pendulum.from_format(row["Termin"][4:], 'DD.MM.YY HH:mm', tz='Europe/Berlin')  
+
         date_season = seasonFromDate(pendulum_time)
         
         team1 = translateTeam( row["Team"] )
