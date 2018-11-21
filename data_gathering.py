@@ -82,7 +82,7 @@ def getCurrentSeason():
     return cur_season
 
 
-def getTableFromKicker(season, league, gameday, tableCSV, force = False):
+def getTableFromKicker(season, league, gameday, tableCSV, force = False, driver=None):
     """
     Build a DF for each GameDay's table
     
@@ -111,9 +111,9 @@ def getTableFromKicker(season, league, gameday, tableCSV, force = False):
             return
     
     
-    options = webdriver.firefox.options.Options()
-    options.add_argument('-headless')
-    driver = webdriver.Firefox(firefox_options=options)
+    #options = webdriver.firefox.options.Options()
+    #options.add_argument('-headless')
+    #driver = webdriver.Firefox(firefox_options=options)
     
     driver.get("http://www.kicker.de/news/fussball/bundesliga/spieltag/{}-bundesliga/20{}-{}/{}/0/spieltag.html".format(
                 league, fix_season(season), fix_season(season+1), gameday)) 
@@ -190,11 +190,11 @@ def getTableFromKicker(season, league, gameday, tableCSV, force = False):
     
     print("Season ", season, "League ", league, "Gameday ", gameday, "  done")
     
-    driver.close()
+    #driver.close()
 
 
 
-def getAllTeamPages(inCsvFile):
+def getAllTeamPages(inCsvFile, driver=None):
     """
     Get a list and current kicker urls of all teams in league 1 and 2 since 2004
     
@@ -275,7 +275,7 @@ def getAllTeamPages(inCsvFile):
             
             outDF.to_csv(inCsvFile, sep=";") 
     
-    driver.close()
+    #driver.close()
 
 
 def getScore(entry):
@@ -305,7 +305,7 @@ def getOvertime(entry):
         return 0
 
 
-def getTeamResults(inCsvFile, mode = 'u', rec_url = None):
+def getTeamResults(inCsvFile, mode = 'u', rec_url = None, driver=None):
     """
     Get ALL games of a team by season, go back until season 2004
     
@@ -326,9 +326,9 @@ def getTeamResults(inCsvFile, mode = 'u', rec_url = None):
     except:
         outDF = pd.DataFrame(columns=collist)
     
-    options = webdriver.firefox.options.Options()
-    options.add_argument('-headless')
-    driver = webdriver.Firefox(firefox_options=options)
+    #options = webdriver.firefox.options.Options()
+    #options.add_argument('-headless')
+    #driver = webdriver.Firefox(firefox_options=options)
     
     driver.set_page_load_timeout(60)
 
@@ -460,11 +460,11 @@ def getTeamResults(inCsvFile, mode = 'u', rec_url = None):
         print("Season ", cur_season, " Team ", split_url[-2], " updated")
 
     
-    driver.close()
+    #driver.close()
 
 
 
-def teamResultsBuilder(teamListcsv="AllTeamPages.csv", mode = 'u', outCsv="AllTeamResults.csv"):
+def teamResultsBuilder(teamListcsv="AllTeamPages.csv", mode = 'u', outCsv="AllTeamResults.csv", driver=None):
     """
     Build a teamresults.csv using getTeamResults() for all teams from getAllTeamPages() output
     
@@ -487,7 +487,7 @@ def teamResultsBuilder(teamListcsv="AllTeamPages.csv", mode = 'u', outCsv="AllTe
             url = "/".join(url_split)
             
             
-            getTeamResults(outCsv, mode = 'a', rec_url = url)
+            getTeamResults(outCsv, mode = 'a', rec_url = url, driver=driver)
     
     elif mode == 'u':
         # will effectivly delete present entry for club and season, fetch it again and append new data
@@ -500,7 +500,7 @@ def teamResultsBuilder(teamListcsv="AllTeamPages.csv", mode = 'u', outCsv="AllTe
             url = "/".join(url_split)
             
             
-            getTeamResults(outCsv, mode = 'u', rec_url = url)
+            getTeamResults(outCsv, mode = 'u', rec_url = url, driver=driver)
 
 
 
@@ -533,7 +533,7 @@ def getCurrentList(in_urls):
         
 
 
-def getCoaches(teamListcsv="AllTeamPages.csv", mode = "u", outCsv = "AllTeamCoaches.csv"):
+def getCoaches(teamListcsv="AllTeamPages.csv", mode = "u", outCsv = "AllTeamCoaches.csv", driver=None):
     """
     Get all the coaches of a team
     Uses most recent urls from teamListcsv to go through coaches list    
@@ -551,9 +551,9 @@ def getCoaches(teamListcsv="AllTeamPages.csv", mode = "u", outCsv = "AllTeamCoac
     except:
         outDF = pd.DataFrame(columns=collist)
     
-    options = webdriver.firefox.options.Options()
-    options.add_argument('-headless')
-    driver = webdriver.Firefox(firefox_options=options)
+    #options = webdriver.firefox.options.Options()
+    #options.add_argument('-headless')
+    #driver = webdriver.Firefox(firefox_options=options)
     
     teamList = pd.read_csv(teamListcsv, sep=";")
     teamList.sort_values("Season", ascending=False, inplace=True)
@@ -630,7 +630,7 @@ def getCoaches(teamListcsv="AllTeamPages.csv", mode = "u", outCsv = "AllTeamCoac
     
             outDF.to_csv(outCsv, sep=";")
     
-    driver.close()
+    #driver.close()
 
 
 def getCurrentGameDay(league, in_df):
@@ -672,6 +672,11 @@ def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResult
     Should not be run on actual gamedays but only AFTER, unwanted behaviour expected otherwise
     """
     
+    options = webdriver.firefox.options.Options()
+    options.add_argument('-headless')
+    driver = webdriver.Firefox(firefox_options=options)    
+    
+    
     cur_season = getCurrentSeason() 
     
     # will check if AllTeamPages was run for current season. If run, will be skipped
@@ -687,7 +692,7 @@ def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResult
     
         
     # update AllTeamResults next, to use this to extract current gameday
-    teamResultsBuilder(allTeamPages, mode = 'u', outCsv=allTeamResults)
+    teamResultsBuilder(allTeamPages, mode = 'u', outCsv=allTeamResults, driver=driver)
     print("Teamresults updated")
     
     
@@ -725,14 +730,15 @@ def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResult
         upper_boundary = min(upper_boundary, 34)
         
         for g in range(1, upper_boundary+2):
-            getTableFromKicker(cur_season, l, g, allTables)
+            getTableFromKicker(cur_season, l, g, allTables, driver=driver)
 
     print("TeamTables updated")
 
 
     # # # # #
-    getCoaches(teamListcsv=allTeamPages, mode='u', outCsv = allCoaches)
+    getCoaches(teamListcsv=allTeamPages, mode='u', outCsv = allCoaches, driver=driver)
     
+    driver.close()
 
 
 
