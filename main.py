@@ -63,22 +63,25 @@ def makeTeamsOneHot(df, colList=None):
 
 if __name__ == "__main__":
     
-    data_folder = "C:/Stuff/Projects/kicktipp/"
+    data_folder = "D:/Stuff/Projects/kicktipp/"
     
-    league_1_gameday = 10  
-    league_2_gameday = 12
+    league_1_gameday = 12 
+    league_2_gameday = 14
     
-    """
+    
     # First update all data
     data_gathering.updateAll(allTeamPages =  data_folder + "AllTeamPages.csv", 
                              allTeamResults = data_folder + "AllTeamResults.csv", 
                              allTables = data_folder + "AllTables.csv", 
-                             allCoaches = data_folder + "AllTeamCoaches.csv")
+                             allCoaches = data_folder + "AllTeamCoaches.csv",
+                             gameDays = (league_1_gameday, league_2_gameday) )
+   
     
     # then build new human and ml dataframe
     build_dfs.createHumanFrame(outFile=data_folder + "human_table.csv")
     build_dfs.build_ml_df(human_csv=data_folder + "human_table.csv", ml_csv=data_folder + "ml.csv")
-    """  
+    
+     
     # get training dataset, make teams one-hot
     ml_df = pd.read_csv(data_folder + "ml.csv", sep=";")
     ml_df_oh = makeTeamsOneHot(ml_df)

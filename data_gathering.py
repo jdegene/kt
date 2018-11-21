@@ -663,7 +663,7 @@ def getCurrentGameDay(league, in_df):
 
 
 def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResults.csv", 
-              allTables = "AllTables.csv", allCoaches = "AllTeamCoaches.csv"):
+              allTables = "AllTables.csv", allCoaches = "AllTeamCoaches.csv", gameDays=None):
     """
     will update the above specified files for current season & gameday
     
@@ -725,6 +725,9 @@ def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResult
             upper_boundary = data_game_day_BL1
         else:
             upper_boundary = data_game_day_BL2
+        
+        if upper_boundary not in range(1,35):
+            upper_boundary = gameDays[l-1]
         
         # ensure maximum gameday is 34
         upper_boundary = min(upper_boundary, 34)
