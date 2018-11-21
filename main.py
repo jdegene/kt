@@ -70,10 +70,10 @@ if __name__ == "__main__":
     
     
     # First update all data
-    data_gathering.updateAll(allTeamPages =  data_folder + "AllTeamPages.csv", 
-                             allTeamResults = data_folder + "AllTeamResults.csv", 
-                             allTables = data_folder + "AllTables.csv", 
-                             allCoaches = data_folder + "AllTeamCoaches.csv",
+    data_gathering.updateAll(allTeamPages_csv =  data_folder + "AllTeamPages.csv", 
+                             allTeamResults_csv = data_folder + "AllTeamResults.csv", 
+                             allTables_csv = data_folder + "AllTables.csv", 
+                             allCoaches_csv = data_folder + "AllTeamCoaches.csv",
                              gameDays = (league_1_gameday, league_2_gameday) )
    
     

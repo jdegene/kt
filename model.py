@@ -27,7 +27,7 @@ def create_t1goals_model(ml_df, silent=0):
     Y = ml_df_g1["Result_t1goals"].values
     X = ml_df_g1.drop("Result_t1goals", axis=1).values
         
-    test_size = 0.1
+    test_size = 0.001
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=test_size)
 
     # fit model no training data
@@ -57,7 +57,7 @@ def create_goaldiff_model(ml_df,silent=0):
     Y = ml_df_diff["Result_goaldiff"].values
     X = ml_df_diff.drop("Result_goaldiff", axis=1).values
     
-    test_size = 0.1
+    test_size = 0.001
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=test_size)
 
     # fit model no training data

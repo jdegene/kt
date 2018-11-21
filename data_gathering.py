@@ -41,6 +41,7 @@ def getUrl(url):
     
 def buildCSV(season, league, inCsvFile):
     """
+    Deprecated
     Build a large csv File of game results
     
     :season: int of season, eg 2016 is season 2016/17
@@ -662,8 +663,8 @@ def getCurrentGameDay(league, in_df):
 
 
 
-def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResults.csv", 
-              allTables = "AllTables.csv", allCoaches = "AllTeamCoaches.csv", gameDays=None):
+def updateAll(allTeamPages_csv = "AllTeamPages.csv", allTeamResults_csv = "AllTeamResults.csv", 
+              allTables_csv = "AllTables.csv", allCoaches_csv = "AllTeamCoaches.csv", gameDays=None):
     """
     will update the above specified files for current season & gameday
     
@@ -680,9 +681,9 @@ def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResult
     cur_season = getCurrentSeason() 
     
     # will check if AllTeamPages was run for current season. If run, will be skipped
-    aTP_df = pd.read_csv(allTeamPages, sep=";")
+    aTP_df = pd.read_csv(allTeamPages_csv, sep=";")
     if cur_season not in aTP_df["Season"].unique():
-        getAllTeamPages(allTeamPages)
+        getAllTeamPages(allTeamPages_csv)
         print("Teampages updated")
     else:
         print("Teampages not updated, still up-to-date")
@@ -692,7 +693,7 @@ def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResult
     
         
     # update AllTeamResults next, to use this to extract current gameday
-    teamResultsBuilder(allTeamPages, mode = 'u', outCsv=allTeamResults, driver=driver)
+    teamResultsBuilder(allTeamPages_csv, mode = 'u', outCsv=allTeamResults_csv, driver=driver)
     print("Teamresults updated")
     
     
@@ -700,46 +701,44 @@ def updateAll(allTeamPages = "AllTeamPages.csv", allTeamResults = "AllTeamResult
     
     
     # use first team in list for current season and extract last played gameday
-    aTR_df = pd.read_csv(allTeamResults, sep=";")
+    #aTR_df = pd.read_csv(allTeamResults_csv, sep=";")
     # reduce to current season
-    aTR_df_cur = aTR_df[ aTR_df["Season"] == cur_season ]
+    #aTR_df_cur = aTR_df[ aTR_df["Season"] == cur_season ]
     
-    # for current approach redundant
-    #last_gameday_BL1 = getCurrentGameDay(1, aTR_df_cur)
-    #last_gameday_BL2 = getCurrentGameDay(2, aTR_df_cur)
+
     
     
     # update AllTables, by checking how many gamedays are missing 
-    aT_df = pd.read_csv(allTables, sep=";")
+    aT_df = pd.read_csv(allTables_csv, sep=";")
     data_game_day_BL1 = aT_df[ (aT_df["Season"]==cur_season) & (aT_df["League"]==1)]["GameDay"].max()
     data_game_day_BL2 = aT_df[ (aT_df["Season"]==cur_season) & (aT_df["League"]==2)]["GameDay"].max()
     
     # cut off current season, save file back to csv, then re-run current season
     aT_df  = aT_df [aT_df ["Season"] != cur_season]
-    aT_df.to_csv(allTables, sep=";")
+    aT_df.to_csv(allTables_csv, sep=";")
     
     for l in [1,2]:
         
         # determine maximum gameday to crawl in current season
-        if l == 1:
-            upper_boundary = data_game_day_BL1
-        else:
-            upper_boundary = data_game_day_BL2
-        
-        if upper_boundary not in range(1,35):
-            upper_boundary = gameDays[l-1]
+        #if l == 1:
+        #    upper_boundary = data_game_day_BL1
+        #else:
+        #    upper_boundary = data_game_day_BL2
+        # 
+        #if upper_boundary not in range(1,35):
+        upper_boundary = gameDays[l-1]
         
         # ensure maximum gameday is 34
         upper_boundary = min(upper_boundary, 34)
         
-        for g in range(1, upper_boundary+2):
-            getTableFromKicker(cur_season, l, g, allTables, driver=driver)
+        for g in range(1, upper_boundary+1):
+            getTableFromKicker(cur_season, l, g, allTables_csv, driver=driver)
 
     print("TeamTables updated")
 
 
     # # # # #
-    getCoaches(teamListcsv=allTeamPages, mode='u', outCsv = allCoaches, driver=driver)
+    getCoaches(teamListcsv=allTeamPages_csv, mode='u', outCsv = allCoaches_csv, driver=driver)
     
     driver.close()
 

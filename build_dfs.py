@@ -17,7 +17,7 @@ warnings.filterwarnings('ignore')
 
 # # # # # # # # # LOAD RAW DATA # # # # # # # # #
 
-data_folder = "C:/Stuff/Projects/kicktipp/"
+data_folder = "D:/Stuff/Projects/kicktipp/"
 
 allTeamPages = pd.read_csv(data_folder + "AllTeamPages.csv", sep=";")
 allTeamResults = pd.read_csv(data_folder + "AllTeamResults.csv", sep=";")
@@ -732,6 +732,8 @@ def buildPredictDF(inDF, allTeamResults=allTeamResults):
     :inDF: output of gameDayGames()
     """    
     
+    print("Building Prediction DF")
+    
     # create same human readable DF as with createHumanFrame
     outDF = pd.DataFrame(columns=['Retrieve_Date',
                                   'Game_Date',
@@ -838,6 +840,8 @@ def buildPredictDF(inDF, allTeamResults=allTeamResults):
         
         team1 = translateTeam( row["Team"] )
         team2 = translateTeam( row["Gegner"] )
+        
+        print('{} vs. {} built'.format(team1, team2))
         
         # determine numeric league
         if row["Wettbewerb"] == 'BL':
@@ -980,7 +984,7 @@ def buildPredictDF(inDF, allTeamResults=allTeamResults):
         if (len(set(getPastLeagues(team1, date_season))) == 1) & (getPastLeagues(team1, date_season)[0]==table_entry1["League"].values[0]):
             t1_last5 = 1
         if (len(set(getPastLeagues(team2, date_season))) == 1) & (getPastLeagues(team2, date_season)[0]==table_entry2["League"].values[0]):
-                t2_last5 = 1
+            t2_last5 = 1
         
         # last season positions, if no table exists, default to 3   
         try:
