@@ -629,7 +629,8 @@ def getCoaches(teamListcsv="AllTeamPages.csv", mode = "u", outCsv = "AllTeamCoac
             print(len(coaches), " Coaches of ", url_split[-2] ,"done")    
     
             outDF.to_csv(outCsv, sep=";")
-
+    
+    driver.close()
 
 
 def getCurrentGameDay(league, in_df):
