@@ -130,7 +130,7 @@ def switch_teams(df):
                                           'EL_candidate1' : 'EL_candidate2', 'EL_candidate2' : 'EL_candidate1'})
      
     # last direct game results must be switched as well
-    man_switch = ['LastDirectGame1', 'LastDirectGame2', 'LastDirectGame3']
+    man_switch = ['Result','LastDirectGame1', 'LastDirectGame2', 'LastDirectGame3']
     for col in man_switch:
         switch_df[col] = switch_df.apply(lambda row: row[col][::-1], axis=1)
         
