@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
+#from sklearn.preprocessing import OneHotEncoder
 
 
 
@@ -75,15 +76,48 @@ def create_goaldiff_model(ml_df,silent=0):
 
     return model
 
-    #unique, counts = np.unique(y_pred, return_counts=True)
-    #pcount = [str(c / len(y_test) )[:5] for c in counts]
-    #print(dict(zip(unique, pcount )))
 
 
+def create_categorical_tree(hum_df, silent=0):
+    """
+    NOT WORKING, NEED TO ONEHOT ENCODE
+    Build a tree using categorical values; treat output as category (no split in goals and goal diff)
+    
+    :hum_df: large human_df from build_dfs.createHumanFrame()
+    """
+    # drop unneccesary columns
+    hum_df_clean = hum_df.drop(["Retrieve_Date", "Game_Date"], axis=1)
+    
+    # one hot encode results
+
+    
+    # define X, Y... basically remove Y from X, transform both to arrays
+    Y = hum_df_clean["Result"].values
+    X = hum_df_clean.drop("Result", axis=1).values
+    
+    test_size = 0.001
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=test_size)
+    
+    # fit model no training data
+    model = DecisionTreeClassifier()
+    model.fit(X_train, y_train)
+    
+    # make predictions for test data
+    y_pred = model.predict(X_test)
+    predictions = [round(value) for value in y_pred]
+    
+    # evaluate predictions
+    accuracy = accuracy_score(y_test, predictions)
+    if silent != 1:
+        print("Accuracy: %.2f%%" % (accuracy * 100.0))
+
+    return model
 
 
 def predict_outcome(model, inData):
     return model.predict(inData.reshape(1,-1))[0]
+
+
 
 
 
