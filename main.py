@@ -17,9 +17,12 @@ def getVotes(i):
     goalList = []
     diffList = []
     for i in range(i):
-
-        t1goals_model = model.create_t1goals_model(ml_df, silent=1)
-        goaldiff_model = model.create_goaldiff_model(ml_df,silent=1)
+        
+        
+        #t1goals = max(t1goals, goaldiff) # account for cases, goaldiff is larger than shot goals
+        
+        t1goals_model = model.create_t1goals_model(ml_df_oh)
+        goaldiff_model = model.create_goaldiff_model(ml_df_oh)
         
         t1goals = t1goals_model.predict(row[1].values.reshape(1, -1))
         goaldiff = goaldiff_model.predict(row[1].values.reshape(1, -1))
@@ -60,28 +63,32 @@ def makeTeamsOneHot(df, colList=None):
     return one_hot_df
 
 
+def update_inputs(data_folder):
+    data_gathering.updateAll(allTeamPages_csv =  data_folder + "AllTeamPages.csv", 
+                        allTeamResults_csv = data_folder + "AllTeamResults.csv", 
+                        allTables_csv = data_folder + "AllTables.csv", 
+                        allCoaches_csv = data_folder + "AllTeamCoaches.csv",
+                        gameDays = (league_1_gameday, league_2_gameday) )
+
 
 if __name__ == "__main__":
     
     data_folder = "D:/Stuff/Projects/kicktipp/"
     
-    league_1_gameday = 12 
-    league_2_gameday = 14
+    league_1_gameday = 13 
+    league_2_gameday = 15
     
     
     # First update all data
-    data_gathering.updateAll(allTeamPages_csv =  data_folder + "AllTeamPages.csv", 
-                             allTeamResults_csv = data_folder + "AllTeamResults.csv", 
-                             allTables_csv = data_folder + "AllTables.csv", 
-                             allCoaches_csv = data_folder + "AllTeamCoaches.csv",
-                             gameDays = (league_1_gameday, league_2_gameday) )
-   
+    update_inputs(data_folder)   
     
     # then build new human and ml dataframe
     build_dfs.createHumanFrame(outFile=data_folder + "human_table.csv")
     build_dfs.build_ml_df(human_csv=data_folder + "human_table.csv", ml_csv=data_folder + "ml.csv")
     
-     
+    
+    # # # SPLIT APPROACH # # #
+    
     # get training dataset, make teams one-hot
     ml_df = pd.read_csv(data_folder + "ml.csv", sep=";")
     ml_df_oh = makeTeamsOneHot(ml_df)
@@ -136,3 +143,24 @@ if __name__ == "__main__":
         team_str = team_str + ''.join([" " for x in range(40 - len(team_str))] ) 
         print(team_str + "\t--->\t", t1goals[0], ":", t1goals[0]-goaldiff[0])
         
+
+    # # # CATEGORIACL APPROACH # # #
+    #human_df =  pd.read_csv(data_folder + "human_table.csv", sep=";")
+    #cat_model = model.create_categorical_tree(human_df)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
